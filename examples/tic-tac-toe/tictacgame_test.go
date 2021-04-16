@@ -109,7 +109,7 @@ func TestExample6(t *testing.T) {
 			O, E, X,
 		},
 	}
-	tree := mcts.NewMonteCarloTree(mcts.MonteCarloTreeConfig{MaxIterations: 5000})
+	tree := mcts.NewMonteCarloTree(mcts.MonteCarloTreeConfig{MaxIterations: 1000})
 	nodes := tree.Start(game)
 	assert.Equal(t, fmt.Sprintf("%s",[]player{
 			X, O, X,

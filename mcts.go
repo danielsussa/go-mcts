@@ -83,27 +83,6 @@ func(n *Node) getByState(state State) *Node {
 	return nil
 }
 
-func(n *Node) finalScore() float64 {
-	exploitation := n.score / float64(n.nVisited)
-	exploration := math.Sqrt(math.Log(float64(n.getParentNVisited())) / float64(n.nVisited))
-	return exploitation + exploration
-}
-
-type action string
-
-const (
-	selection action = "selection"
-	rollOut   action = "rollOut"
-	expand    action = "expand"
-)
-
-func(n *Node) action() action {
-	if n.maxPlays == nil || *n.maxPlays != n.totalPlays {
-		return expand
-	}
-	return rollOut
-}
-
 func(n *Node) selection(policy PolicyFunc) *Node {
 	for {
 		if n.child == nil {
@@ -139,9 +118,6 @@ func getNodeScore(childNodes []*Node, policy PolicyFunc) []nodeScore {
 	nodesScore := make([]nodeScore, 0)
 
 	for _, child := range childNodes {
-		if child.isLeaf {
-			continue
-		}
 		nodesScore = append(nodesScore, nodeScore{
 			node:  child,
 			score: policy(child.score, child.nVisited, child.getParentNVisited()),
@@ -159,6 +135,7 @@ func defaultPolicyFunc() PolicyFunc {
 		}
 		nVisitedF := float64(nVisited)
 		sqrtV := math.Sqrt(math.Log(float64(NVisited)) / nVisitedF)
+
 		return math.Round((total + 2.0 * sqrtV) * 100) / 100
 	}
 }
@@ -189,15 +166,6 @@ type nodeFinalScore struct {
 	score  float64
 }
 
-//func(mct *MonteCarloTree) Continue(state State)(FinalScore, bool){
-//	node := mct.node.getByState(state)
-//	if node == nil {
-//		return FinalScore{}, false
-//	}
-//	mct.node = node
-//	return mct.start(), true
-//}
-
 func(mct *MonteCarloTree) Start(initialState State)FinalScore{
 	mct.node = &Node{
 		state:  initialState,
@@ -220,21 +188,6 @@ func(mct *MonteCarloTree) start()FinalScore{
 		}
 		childNode.rollOut()
 
-		//switch node.action() {
-		//case rollOut:
-		//	node.rollOut()
-		//case expand:
-		//	node.expand()
-		//}
-
-		//if node.parent == nil && node.child == nil {
-		//	node.expand()
-		//}else if node.nVisited == 0 {
-		//	node.rollOut()
-		//}else if node.nVisited == 1{
-		//	node.expand()
-		//}
-
 		interactions++
 		if interactions >= mct.maxInteractions {
 			break
@@ -252,7 +205,7 @@ func(mct *MonteCarloTree) start()FinalScore{
 	}
 
 	sort.SliceStable(ndScore, func(i, j int) bool {
-		return ndScore[i].node.nVisited > ndScore[j].node.nVisited
+		return ndScore[i].score > ndScore[j].score
 	})
 
 	return FinalScore{
