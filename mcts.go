@@ -8,19 +8,21 @@ import (
 
 type Node struct {
 	score    float64
-	scoreL   float64
-	leafs    int64
 	nVisited int64
 	levelY   int
-	levelX   int
 
 	state  State
 	child  []*Node // if nil it's a leaf node
 	parent *Node // if nil it's a root node
 
-	isLeaf bool
+	isLeaf   bool
+	maxPlays   *uint
+	totalPlays uint
 }
 
+func (n *Node) getMaxPlays() uint{
+	return *n.maxPlays
+}
 
 func (n *Node) rollOut() {
 	score := n.state.Simulate()
@@ -36,32 +38,28 @@ func (n *Node) backPropagate(score float64) {
 	n.parent.backPropagate(score)
 }
 
-func (n *Node) backPropagateL(score float64) {
-	n.scoreL += score
-	n.leafs++
-	if n.parent == nil {
-		return
+func (n *Node) expand() *Node {
+	if n.maxPlays == nil {
+		maxPlays := n.state.MaxPlays()
+		n.maxPlays = &maxPlays
 	}
-	n.parent.backPropagateL(score)
-}
-
-func (n *Node) expand() bool{
-	states := n.state.Expand()
-	if states == nil || len(states) == 0 {
+	if *n.maxPlays == n.totalPlays {
+		return n
+	}
+	state := n.state.Expand(n.totalPlays)
+	n.totalPlays++
+	if state == nil {
 		n.isLeaf = true
-		n.scoreL = n.state.Simulate()
-		n.parent.backPropagateL(n.scoreL)
-		return false
+		return nil
 	}
-	for idx, state := range states {
-		n.child = append(n.child, &Node{
-			state:  state,
-			parent: n,
-			levelY: n.levelY + 1,
-			levelX: idx,
-		})
+
+	child := &Node{
+		state:  state,
+		parent: n,
+		levelY: n.levelY + 1,
 	}
-	return true
+	n.child = append(n.child, child)
+	return child
 }
 
 func(n *Node) getParentNVisited() int64 {
@@ -90,9 +88,28 @@ func(n *Node) finalScore() float64 {
 	exploration := math.Sqrt(math.Log(float64(n.getParentNVisited())) / float64(n.nVisited))
 	return exploitation + exploration
 }
+
+type action string
+
+const (
+	selection action = "selection"
+	rollOut   action = "rollOut"
+	expand    action = "expand"
+)
+
+func(n *Node) action() action {
+	if n.maxPlays == nil || *n.maxPlays != n.totalPlays {
+		return expand
+	}
+	return rollOut
+}
+
 func(n *Node) selection(policy PolicyFunc) *Node {
 	for {
 		if n.child == nil {
+			return n
+		}
+		if n.maxPlays == nil || *n.maxPlays != n.totalPlays {
 			return n
 		}
 		selectedNodes := getNodeScore(n.child, policy)
@@ -148,7 +165,8 @@ func defaultPolicyFunc() PolicyFunc {
 
 type State interface {
 	Simulate()float64
-	Expand()[]State
+	Expand(idx uint)State
+	MaxPlays()uint
 	ID()string
 }
 
@@ -171,14 +189,14 @@ type nodeFinalScore struct {
 	score  float64
 }
 
-func(mct *MonteCarloTree) Continue(state State)(FinalScore, bool){
-	node := mct.node.getByState(state)
-	if node == nil {
-		return FinalScore{}, false
-	}
-	mct.node = node
-	return mct.start(), true
-}
+//func(mct *MonteCarloTree) Continue(state State)(FinalScore, bool){
+//	node := mct.node.getByState(state)
+//	if node == nil {
+//		return FinalScore{}, false
+//	}
+//	mct.node = node
+//	return mct.start(), true
+//}
 
 func(mct *MonteCarloTree) Start(initialState State)FinalScore{
 	mct.node = &Node{
@@ -196,13 +214,26 @@ func(mct *MonteCarloTree) start()FinalScore{
 			iterateUntilEnd = true
 			break
 		}
-		if node.parent == nil && node.child == nil {
-			node.expand()
-		}else if node.nVisited == 0 {
-			node.rollOut()
-		}else if node.nVisited == 1{
-			node.expand()
+		childNode := node.expand()
+		if childNode == nil {
+			continue
 		}
+		childNode.rollOut()
+
+		//switch node.action() {
+		//case rollOut:
+		//	node.rollOut()
+		//case expand:
+		//	node.expand()
+		//}
+
+		//if node.parent == nil && node.child == nil {
+		//	node.expand()
+		//}else if node.nVisited == 0 {
+		//	node.rollOut()
+		//}else if node.nVisited == 1{
+		//	node.expand()
+		//}
 
 		interactions++
 		if interactions >= mct.maxInteractions {

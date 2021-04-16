@@ -87,20 +87,30 @@ func (t ticTacGame)winner()player{
 	return E
 }
 
-func (t ticTacGame) Expand() []mcts.State{
-	states := make([]mcts.State, 0)
+func (t ticTacGame) MaxPlays() uint{
+	total := uint(0)
+	for _,place := range t.board {
+		if place == E {
+			total++
+		}
+	}
+	return total
+}
 
+func (t ticTacGame) Expand(idx uint) mcts.State{
 	if t.winner() != E {
 		return nil
 	}
 
-	currentPlayer := t.playerTurn
+	free := make([]uint, 0)
 	for idx,place := range t.board {
 		if place == E {
-			states = append(states, t.newWithMove(idx, currentPlayer))
+			free = append(free, uint(idx))
 		}
 	}
-	return states
+
+	currentPlayer := t.playerTurn
+	return t.newWithMove(free[idx], currentPlayer)
 }
 
 func (t ticTacGame) ID() string{
@@ -145,7 +155,7 @@ func (t ticTacGame) otherTurn() player{
 	}
 }
 
-func (t ticTacGame)newWithMove(idx int, p player)ticTacGame{
+func (t ticTacGame)newWithMove(idx uint, p player)ticTacGame{
 	newBoard := make([]player,len(t.board))
 	copy(newBoard, t.board)
 	newBoard[idx] = p
