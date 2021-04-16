@@ -99,7 +99,6 @@ func TestExample5(t *testing.T) {
 	}))
 }
 
-// errado aqui, deveria escolher
 func TestExample6(t *testing.T) {
 	game := ticTacGame{
 		playerTurn: X,

@@ -161,7 +161,6 @@ type FinalScore struct {
 }
 
 type nodeFinalScore struct {
-	node   *Node
 	State  State
 	score  float64
 }
@@ -198,8 +197,7 @@ func(mct *MonteCarloTree) start()FinalScore{
 	ndScore := make([]nodeFinalScore, 0)
 	for _, childNode := range mct.node.child {
 		ndScore = append(ndScore, nodeFinalScore{
-			node:   childNode,
-			score:  defaultPolicyFunc()(childNode.score, childNode.nVisited, childNode.getParentNVisited()),
+			score:  mct.policy(childNode.score, childNode.nVisited, childNode.getParentNVisited()),
 			State:  childNode.state,
 		})
 	}
