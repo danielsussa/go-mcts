@@ -1,6 +1,7 @@
 package mcts
 
 import (
+	"fmt"
 	"math"
 	"sort"
 	"time"
@@ -15,9 +16,9 @@ type Node struct {
 	child  []*Node // if nil it's a leaf node
 	parent *Node // if nil it's a root node
 
-	isLeaf   bool
 	maxPlays   *uint
 	totalPlays uint
+	player     string
 }
 
 func (n *Node) getMaxPlays() uint{
@@ -25,41 +26,52 @@ func (n *Node) getMaxPlays() uint{
 }
 
 func (n *Node) rollOut() {
-	score := n.state.Simulate()
-	n.backPropagate(score)
+	score, winner := n.state.Simulate()
+	n.backPropagate(score, winner)
 }
 
-func (n *Node) backPropagate(score float64) {
+func (n *Node) backPropagate(score float64, winner string) {
 	n.nVisited++
-	n.score += score
+	if n.player == winner {
+		n.score += score
+	}else {
+		n.score -= score
+	}
 	if n.parent == nil {
 		return
 	}
-	n.parent.backPropagate(score)
+	n.parent.backPropagate(score, winner)
 }
 
-func (n *Node) expand() *Node {
+func (n *Node) expand() (*Node,bool) {
 	if n.maxPlays == nil {
 		maxPlays := n.state.MaxPlays()
 		n.maxPlays = &maxPlays
 	}
 	if *n.maxPlays == n.totalPlays {
-		return n
+		return n, true
 	}
 	state := n.state.Expand(n.totalPlays)
 	n.totalPlays++
 	if state == nil {
-		n.isLeaf = true
-		return nil
+		return nil, true
+	}
+
+	// is duplicated
+	for _, child := range n.child {
+		if child.state.ID() == state.ID() {
+			return &Node{}, false
+		}
 	}
 
 	child := &Node{
 		state:  state,
+		player: state.Player(),
 		parent: n,
 		levelY: n.levelY + 1,
 	}
 	n.child = append(n.child, child)
-	return child
+	return child, true
 }
 
 func(n *Node) getParentNVisited() int64 {
@@ -69,19 +81,30 @@ func(n *Node) getParentNVisited() int64 {
 	return n.parent.getParentNVisited()
 }
 
-func(n *Node) getByState(state State) *Node {
+func(n *Node) selectByState(state State) *Node {
 	if n.state.ID() == state.ID() {
 		return n
 	}
 	for _, child := range n.child {
-		node := child.getByState(state)
-		if node == nil {
+		if child.state.ID() == state.ID() {
+			return child
+		}
+		childNode :=  child.selectByState(state)
+		if childNode == nil {
 			continue
 		}
-		return node
+		if childNode.state.ID() == state.ID() {
+			return childNode
+		}
 	}
 	return nil
 }
+
+type action string
+
+const (
+	selection
+)
 
 func(n *Node) selection(policy PolicyFunc) *Node {
 	for {
@@ -92,11 +115,8 @@ func(n *Node) selection(policy PolicyFunc) *Node {
 			return n
 		}
 		selectedNodes := getNodeScore(n.child, policy)
-		if len(selectedNodes) == 0 {
-			return nil
-		}
 		sort.SliceStable(selectedNodes, func(i, j int) bool {
-			return selectedNodes[i].score > selectedNodes[j].score
+			return selectedNodes[i].score > selectedNodes[j].score && selectedNodes[i].node.nVisited < selectedNodes[j].node.nVisited
 		})
 		for _, selectedNode := range selectedNodes {
 			node := selectedNode.node.selection(policy)
@@ -120,7 +140,7 @@ func getNodeScore(childNodes []*Node, policy PolicyFunc) []nodeScore {
 	for _, child := range childNodes {
 		nodesScore = append(nodesScore, nodeScore{
 			node:  child,
-			score: policy(child.score, child.nVisited, child.getParentNVisited()),
+			score: policy(child.score, child.nVisited, child.parent.nVisited),
 		})
 	}
 	return nodesScore
@@ -130,20 +150,28 @@ type PolicyFunc func(total float64, nVisited, NVisited int64)float64
 
 func defaultPolicyFunc() PolicyFunc {
 	return func(total float64, nVisited , NVisited int64) float64 {
-		if nVisited == 0 {
-			return math.Inf(1)
-		}
-		nVisitedF := float64(nVisited)
-		sqrtV := math.Sqrt(math.Log(float64(NVisited)) / nVisitedF)
+		exploitation := total / float64(nVisited)
+		exploration := math.Sqrt(2 * math.Log(float64(NVisited)) / float64(nVisited))
+		sum := exploitation + exploration
+		return math.Round(sum * 100) / 100
 
-		return math.Round((total + 2.0 * sqrtV) * 100) / 100
+		//nVisitedF := float64(nVisited)
+		//sqrtV := math.Sqrt(math.Log(float64(NVisited)) / nVisitedF)
+		//
+		//return math.Round((total + 2.0 * sqrtV) * 100) / 100
 	}
 }
 
+//let exploitation = node.data.value / node.data.simulations;
+//let exploration = Math.sqrt(2 * Math.log(parent.data.simulations) / node.data.simulations);
+//return exploitation + exploration;
+//
+
 type State interface {
-	Simulate()float64
+	Simulate()(float64, string)
 	Expand(idx uint)State
 	MaxPlays()uint
+	Player()string
 	ID()string
 }
 
@@ -165,14 +193,24 @@ type nodeFinalScore struct {
 	score  float64
 }
 
-func(mct *MonteCarloTree) Start(initialState State)FinalScore{
+func(mct *MonteCarloTree) Continue(state State)(FinalScore, error){
+	node := mct.node.selectByState(state)
+	if node == nil {
+		return FinalScore{}, fmt.Errorf("node not found")
+	}
+	node.parent = nil
+	mct.node = node
+	return mct.start()
+}
+
+func(mct *MonteCarloTree) Start(initialState State)(FinalScore, error){
 	mct.node = &Node{
 		state:  initialState,
 	}
 	return mct.start()
 }
 
-func(mct *MonteCarloTree) start()FinalScore{
+func(mct *MonteCarloTree) start()(FinalScore, error){
 	iterateUntilEnd := false
 	interactions := uint(0)
 	for {
@@ -181,11 +219,17 @@ func(mct *MonteCarloTree) start()FinalScore{
 			iterateUntilEnd = true
 			break
 		}
-		childNode := node.expand()
-		if childNode == nil {
-			continue
+		childNode, addNewNode := node.expand()
+		if !addNewNode {
+			return FinalScore{}, fmt.Errorf("duplication node")
 		}
-		childNode.rollOut()
+
+		if childNode == nil {
+			node.rollOut()
+		}else {
+			childNode.rollOut()
+		}
+
 
 		interactions++
 		if interactions >= mct.maxInteractions {
@@ -197,7 +241,7 @@ func(mct *MonteCarloTree) start()FinalScore{
 	ndScore := make([]nodeFinalScore, 0)
 	for _, childNode := range mct.node.child {
 		ndScore = append(ndScore, nodeFinalScore{
-			score:  mct.policy(childNode.score, childNode.nVisited, childNode.getParentNVisited()),
+			score:  float64(childNode.nVisited),
 			State:  childNode.state,
 		})
 	}
@@ -210,7 +254,7 @@ func(mct *MonteCarloTree) start()FinalScore{
 		Iterations: mct.totalInteractions,
 		UntilEnd:   iterateUntilEnd,
 		NodeScore:  ndScore,
-	}
+	}, nil
 }
 
 type MonteCarloTreeConfig struct {
