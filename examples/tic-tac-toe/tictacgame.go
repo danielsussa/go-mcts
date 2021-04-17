@@ -13,29 +13,33 @@ const (
 	O player = "O"
 )
 
-var seed int64
 
 type ticTacGame struct {
 	board      []player
 	playerTurn player
+	lastMove   uint
+}
+
+func (t ticTacGame) Player()string{
+	return string(t.playerTurn)
 }
 
 // until final game & result
-func (t ticTacGame) Simulate()float64{
+func (t ticTacGame) Simulate()(float64,string){
 	//total := 0.0
-	//for i := 0; i < 5 ; i++ {
+	//for i := 0; i < 40 ; i++ {
 	//	total += t.simulate()
 	//}
 	return t.simulate()
 }
 
-func (t ticTacGame) simulate()float64{
+func (t ticTacGame) simulate()(float64,string){
 	if t.winner() != E {
-		return t.winner().convert()
+		return t.winner().winnerPlayer()
 	}
 	game, moved := t.newWithRandomMove()
 	if !moved {
-		return t.winner().convert()
+		return t.winner().winnerPlayer()
 	}
 
 	playerWinner := E
@@ -46,21 +50,21 @@ func (t ticTacGame) simulate()float64{
 		}
 		game, moved = game.newWithRandomMove()
 		if !moved {
-			return 0
+			return 0, "E"
 		}
 	}
-	return playerWinner.convert()
+	return playerWinner.winnerPlayer()
 }
-func (p player)convert()float64 {
+func (p player) winnerPlayer()(float64, string) {
 	switch p {
 	case X:
-		return 1
+		return 1, "X"
 	case E:
-		return 0
+		return 0, "E"
 	case O:
-		return -1
+		return -1, "O"
 	}
-	return 0
+	return 0, "E"
 }
 
 func (t ticTacGame)winner()player{
@@ -116,17 +120,14 @@ func (t ticTacGame) Expand(idx uint) mcts.State{
 		}
 	}
 
-	currentPlayer := t.playerTurn
-	return t.newWithMove(free[idx], currentPlayer)
+	return t.newWithMove(free[idx], t.playerTurn)
 }
 
 func (t ticTacGame) ID() string{
 	return fmt.Sprintf("%v", t.board)
 }
 
-func (t ticTacGame)newWithRandomMove()(ticTacGame, bool){
-	rand.Seed(seed)
-	seed++
+func (t ticTacGame) newWithRandomMove()(ticTacGame, bool){
 	free := make([]int, 0)
 
 	newBoard := make([]player,len(t.board))
@@ -143,6 +144,7 @@ func (t ticTacGame)newWithRandomMove()(ticTacGame, bool){
 	newBoard[place] = t.playerTurn
 	return ticTacGame{
 		board:      newBoard,
+		lastMove:   uint(place),
 		playerTurn: t.otherTurn(),
 	}, true
 }
@@ -167,7 +169,7 @@ func (t ticTacGame)newWithMove(idx uint, p player)ticTacGame{
 	copy(newBoard, t.board)
 	newBoard[idx] = p
 
-	return ticTacGame{board: newBoard, playerTurn: t.otherTurn()}
+	return ticTacGame{board: newBoard, playerTurn: t.otherTurn(), lastMove: idx}
 }
 
 func newTicTacGame()ticTacGame{
