@@ -11,6 +11,7 @@ type Node struct {
 	score    float64
 	nVisited int64
 	levelY   int
+	id       string
 
 	state  State
 	child  []*Node // if nil it's a leaf node
@@ -26,21 +27,25 @@ func (n *Node) getMaxPlays() uint{
 }
 
 func (n *Node) rollOut() {
-	score, winner := n.state.Simulate()
-	n.backPropagate(score, winner)
+	result := n.state.Simulate()
+	n.backPropagate(result)
 }
 
-func (n *Node) backPropagate(score float64, winner string) {
+func (n *Node) backPropagate(result SimulationResult) {
 	n.nVisited++
-	if n.player == winner {
-		n.score += score
-	}else {
-		n.score -= score
+	if n.player == result.Player && n.player == result.Winner {
+		n.score += result.Score
+	}else if n.player == result.Player && n.player != result.Winner {
+		n.score -= result.Score
+	} else if n.player != result.Player && n.player == result.Winner {
+		n.score += result.Score
+	} else if n.player != result.Player && n.player != result.Winner {
+		n.score -= result.Score
 	}
 	if n.parent == nil {
 		return
 	}
-	n.parent.backPropagate(score, winner)
+	n.parent.backPropagate(result)
 }
 
 func (n *Node) expand() (*Node,bool) {
@@ -49,18 +54,18 @@ func (n *Node) expand() (*Node,bool) {
 		n.maxPlays = &maxPlays
 	}
 	if *n.maxPlays == n.totalPlays {
-		return n, true
+		return n, false
 	}
 	state := n.state.Expand(n.totalPlays)
 	n.totalPlays++
 	if state == nil {
-		return nil, true
+		return nil, false
 	}
 
 	// is duplicated
 	for _, child := range n.child {
 		if child.state.ID() == state.ID() {
-			return &Node{}, false
+			return &Node{}, true
 		}
 	}
 
@@ -68,10 +73,11 @@ func (n *Node) expand() (*Node,bool) {
 		state:  state,
 		player: state.Player(),
 		parent: n,
+		id:     state.ID(),
 		levelY: n.levelY + 1,
 	}
 	n.child = append(n.child, child)
-	return child, true
+	return child, false
 }
 
 func(n *Node) getParentNVisited() int64 {
@@ -100,12 +106,6 @@ func(n *Node) selectByState(state State) *Node {
 	return nil
 }
 
-type action string
-
-const (
-	selection
-)
-
 func(n *Node) selection(policy PolicyFunc) *Node {
 	for {
 		if n.child == nil {
@@ -116,7 +116,13 @@ func(n *Node) selection(policy PolicyFunc) *Node {
 		}
 		selectedNodes := getNodeScore(n.child, policy)
 		sort.SliceStable(selectedNodes, func(i, j int) bool {
-			return selectedNodes[i].score > selectedNodes[j].score && selectedNodes[i].node.nVisited < selectedNodes[j].node.nVisited
+			if selectedNodes[i].score > selectedNodes[j].score {
+				return true
+			}else if selectedNodes[i].score < selectedNodes[j].score {
+				return false
+			}else {
+				return selectedNodes[i].node.nVisited < selectedNodes[j].node.nVisited
+			}
 		})
 		for _, selectedNode := range selectedNodes {
 			node := selectedNode.node.selection(policy)
@@ -125,7 +131,7 @@ func(n *Node) selection(policy PolicyFunc) *Node {
 			}
 			return node
 		}
-		return nil
+		return n
 	}
 }
 
@@ -168,11 +174,17 @@ func defaultPolicyFunc() PolicyFunc {
 //
 
 type State interface {
-	Simulate()(float64, string)
+	Simulate()SimulationResult
 	Expand(idx uint)State
 	MaxPlays()uint
 	Player()string
 	ID()string
+}
+
+type SimulationResult struct {
+	Score  float64
+	Winner string
+	Player string
 }
 
 type MonteCarloTree struct {
@@ -184,7 +196,6 @@ type MonteCarloTree struct {
 
 type FinalScore struct {
 	Iterations uint
-	UntilEnd   bool
 	NodeScore  []nodeFinalScore
 }
 
@@ -205,22 +216,20 @@ func(mct *MonteCarloTree) Continue(state State)(FinalScore, error){
 
 func(mct *MonteCarloTree) Start(initialState State)(FinalScore, error){
 	mct.node = &Node{
+		id: initialState.ID(),
 		state:  initialState,
+		player: initialState.Player(),
 	}
 	return mct.start()
 }
 
 func(mct *MonteCarloTree) start()(FinalScore, error){
-	iterateUntilEnd := false
 	interactions := uint(0)
 	for {
 		node := mct.node.selection(mct.policy)
-		if node == nil {
-			iterateUntilEnd = true
-			break
-		}
-		childNode, addNewNode := node.expand()
-		if !addNewNode {
+
+		childNode, duplicatedNode := node.expand()
+		if duplicatedNode {
 			return FinalScore{}, fmt.Errorf("duplication node")
 		}
 
@@ -252,7 +261,6 @@ func(mct *MonteCarloTree) start()(FinalScore, error){
 
 	return FinalScore{
 		Iterations: mct.totalInteractions,
-		UntilEnd:   iterateUntilEnd,
 		NodeScore:  ndScore,
 	}, nil
 }

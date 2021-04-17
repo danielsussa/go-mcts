@@ -161,7 +161,7 @@ func TestMultipleGame(t *testing.T) {
 	winners := map[player]int{
 		X: 0, O: 0, E: 0,
 	}
-	for i := 0; i < 100; i++{
+	for i := 0; i < 1000; i++{
 		winners[newGame()]++
 	}
 	fmt.Println(winners)
@@ -177,9 +177,10 @@ func newGame()player{
 		},
 	}
 
+	p := O
 	for {
 		move := false
-		game, move = game.newWithRandomMove()
+		game, move = game.newWithRandomMove(p)
 		if !move || game.winner() != E{
 			if game.winner() == O {
 				return game.winner()
@@ -187,6 +188,8 @@ func newGame()player{
 			return game.winner()
 		}
 		//game.print()
+
+		p = nextPlayer(game)
 
 
 		tree := mcts.NewMonteCarloTree(mcts.MonteCarloTreeConfig{MaxIterations: 1000})

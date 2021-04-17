@@ -21,25 +21,37 @@ type ticTacGame struct {
 }
 
 func (t ticTacGame) Player()string{
+	if t.playerTurn == E {
+		return string(nextPlayer(t))
+	}
 	return string(t.playerTurn)
 }
 
 // until final game & result
-func (t ticTacGame) Simulate()(float64,string){
+func (t ticTacGame) Simulate()mcts.SimulationResult{
 	//total := 0.0
 	//for i := 0; i < 40 ; i++ {
 	//	total += t.simulate()
 	//}
-	return t.simulate()
+	return t.simulate(t.getPlayerTurn())
 }
 
-func (t ticTacGame) simulate()(float64,string){
+func (t ticTacGame) simulate(startPlayer player)mcts.SimulationResult{
+	p := startPlayer
 	if t.winner() != E {
-		return t.winner().winnerPlayer()
+		return mcts.SimulationResult{
+			Score: t.winner().toScore(),
+			Winner:string(t.winner()),
+			Player: string(startPlayer),
+		}
 	}
-	game, moved := t.newWithRandomMove()
+	game, moved := t.newWithRandomMove(p)
 	if !moved {
-		return t.winner().winnerPlayer()
+		return mcts.SimulationResult{
+			Score: t.winner().toScore(),
+			Winner:string(t.winner()),
+			Player: string(startPlayer),
+		}
 	}
 
 	playerWinner := E
@@ -48,23 +60,42 @@ func (t ticTacGame) simulate()(float64,string){
 		if playerWinner != E {
 			break
 		}
-		game, moved = game.newWithRandomMove()
+		p = nextPlayer(game)
+		game, moved = game.newWithRandomMove(p)
 		if !moved {
-			return 0, "E"
+			return mcts.SimulationResult{
+				Score: 0,
+				Winner: string(E),
+				Player: string(startPlayer),
+			}
 		}
 	}
-	return playerWinner.winnerPlayer()
+	return  mcts.SimulationResult{
+		Score: playerWinner.toScore(),
+		Winner: string(playerWinner),
+		Player: string(startPlayer),
+	}
 }
-func (p player) winnerPlayer()(float64, string) {
+
+func nextPlayer(game ticTacGame)player {
+	if game.playerTurn == E {
+		return X
+	}
+	if game.playerTurn == X {
+		return O
+	}
+	return X
+}
+func (p player) toScore()float64 {
 	switch p {
 	case X:
-		return 1, "X"
+		return 1
 	case E:
-		return 0, "E"
+		return 0
 	case O:
-		return -1, "O"
+		return 1
 	}
-	return 0, "E"
+	return 0
 }
 
 func (t ticTacGame)winner()player{
@@ -120,14 +151,24 @@ func (t ticTacGame) Expand(idx uint) mcts.State{
 		}
 	}
 
-	return t.newWithMove(free[idx], t.playerTurn)
+	return t.newWithMove(free[idx], nextPlayer(t))
 }
 
 func (t ticTacGame) ID() string{
 	return fmt.Sprintf("%v", t.board)
 }
 
-func (t ticTacGame) newWithRandomMove()(ticTacGame, bool){
+
+func (t ticTacGame) newWithNextPlayer()ticTacGame{
+	newBoard := make([]player,len(t.board))
+	copy(newBoard, t.board)
+	return ticTacGame{
+		board: newBoard,
+		playerTurn: nextPlayer(t),
+	}
+}
+
+func (t ticTacGame) newWithRandomMove(p player)(ticTacGame, bool){
 	free := make([]int, 0)
 
 	newBoard := make([]player,len(t.board))
@@ -141,11 +182,11 @@ func (t ticTacGame) newWithRandomMove()(ticTacGame, bool){
 		return ticTacGame{}, false
 	}
 	place := free[rand.Intn(len(free))]
-	newBoard[place] = t.playerTurn
+	newBoard[place] = p
 	return ticTacGame{
 		board:      newBoard,
 		lastMove:   uint(place),
-		playerTurn: t.otherTurn(),
+		playerTurn: p,
 	}, true
 }
 
@@ -156,12 +197,11 @@ func (t ticTacGame) print() {
 	fmt.Println(fmt.Sprintf("%s|%s|%s", t.board[6], t.board[7], t.board[8]))
 }
 
-func (t ticTacGame) otherTurn() player{
-	if t.playerTurn == X {
-		return O
-	}else {
-		return X
+func (t ticTacGame)getPlayerTurn()player{
+	if t.playerTurn == E {
+		return nextPlayer(t)
 	}
+	return t.playerTurn
 }
 
 func (t ticTacGame)newWithMove(idx uint, p player)ticTacGame{
@@ -169,7 +209,7 @@ func (t ticTacGame)newWithMove(idx uint, p player)ticTacGame{
 	copy(newBoard, t.board)
 	newBoard[idx] = p
 
-	return ticTacGame{board: newBoard, playerTurn: t.otherTurn(), lastMove: idx}
+	return ticTacGame{board: newBoard, playerTurn: p, lastMove: idx}
 }
 
 func newTicTacGame()ticTacGame{
