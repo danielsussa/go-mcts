@@ -22,6 +22,14 @@ type ticTacGame struct {
 
 // until final game & result
 func (t ticTacGame) Simulate()float64{
+	//total := 0.0
+	//for i := 0; i < 5 ; i++ {
+	//	total += t.simulate()
+	//}
+	return t.simulate()
+}
+
+func (t ticTacGame) simulate()float64{
 	if t.winner() != E {
 		return t.winner().convert()
 	}
@@ -43,7 +51,6 @@ func (t ticTacGame) Simulate()float64{
 	}
 	return playerWinner.convert()
 }
-
 func (p player)convert()float64 {
 	switch p {
 	case X:

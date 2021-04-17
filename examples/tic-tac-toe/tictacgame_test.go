@@ -17,8 +17,8 @@ func TestExample1(t *testing.T) {
 		},
 	}
 	tree := mcts.NewMonteCarloTree(mcts.MonteCarloTreeConfig{MaxIterations: 1000})
-	nodes := tree.Start(game)
-
+	nodes, err := tree.Start(game)
+	assert.NoError(t, err)
 	assert.Equal(t, nodes.NodeScore[0].State.ID(), fmt.Sprintf("%s",[]player{
 			O, E, E,
 			E, X, E,
@@ -36,30 +36,12 @@ func TestExample2(t *testing.T) {
 		},
 	}
 	tree := mcts.NewMonteCarloTree(mcts.MonteCarloTreeConfig{MaxIterations: 1000})
-	nodes := tree.Start(game)
-
+	nodes, err := tree.Start(game)
+	assert.NoError(t, err)
 	assert.Equal(t, nodes.NodeScore[0].State.ID(), fmt.Sprintf("%s",[]player{
 			O, X, O,
 			E, X, E,
 			E, E, E,
-	}))
-}
-
-func TestExample3(t *testing.T) {
-	game := ticTacGame{
-		playerTurn: X,
-		board: []player{
-			O, X, O,
-			E, X, E,
-			E, O, E,
-		},
-	}
-	tree := mcts.NewMonteCarloTree(mcts.MonteCarloTreeConfig{MaxIterations: 1000})
-	nodes := tree.Start(game)
-	assert.Equal(t, nodes.NodeScore[0].State.ID(), fmt.Sprintf("%s",[]player{
-			O, X, O,
-			X, X, E,
-			E, O, E,
 	}))
 }
 
@@ -73,7 +55,8 @@ func TestExample4(t *testing.T) {
 		},
 	}
 	tree := mcts.NewMonteCarloTree(mcts.MonteCarloTreeConfig{MaxIterations: 1000})
-	nodes := tree.Start(game)
+	nodes, err := tree.Start(game)
+	assert.NoError(t, err)
 	assert.Equal(t, nodes.NodeScore[0].State.ID(), fmt.Sprintf("%s",[]player{
 			O, X, O,
 			X, X, O,
@@ -91,7 +74,8 @@ func TestExample5(t *testing.T) {
 		},
 	}
 	tree := mcts.NewMonteCarloTree(mcts.MonteCarloTreeConfig{MaxIterations: 1000})
-	nodes := tree.Start(game)
+	nodes, err := tree.Start(game)
+	assert.NoError(t, err)
 	assert.Equal(t, nodes.NodeScore[0].State.ID(), fmt.Sprintf("%s",[]player{
 			X, E, X,
 			E, O, E,
@@ -109,10 +93,30 @@ func TestExample6(t *testing.T) {
 		},
 	}
 	tree := mcts.NewMonteCarloTree(mcts.MonteCarloTreeConfig{MaxIterations: 1000})
-	nodes := tree.Start(game)
+	nodes, err := tree.Start(game)
+	assert.NoError(t, err)
 	assert.Equal(t, fmt.Sprintf("%s",[]player{
 			X, O, X,
 			E, O, X,
 			O, E, X,
+	}), nodes.NodeScore[0].State.ID())
+}
+
+func TestExample7(t *testing.T) {
+	game := ticTacGame{
+		playerTurn: X,
+		board: []player{
+			O, X, O,
+			E, X, E,
+			O, E, X,
+		},
+	}
+	tree := mcts.NewMonteCarloTree(mcts.MonteCarloTreeConfig{MaxIterations: 1000})
+	nodes, err := tree.Start(game)
+	assert.NoError(t, err)
+	assert.Equal(t, fmt.Sprintf("%s",[]player{
+		O, X, O,
+		X, X, E,
+		O, E, X,
 	}), nodes.NodeScore[0].State.ID())
 }
