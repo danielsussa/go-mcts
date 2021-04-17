@@ -17,7 +17,7 @@ const (
 type ticTacGame struct {
 	board      []player
 	playerTurn player
-	lastMove   uint
+	lastMove   int
 }
 
 func (t ticTacGame) Player()string{
@@ -29,10 +29,6 @@ func (t ticTacGame) Player()string{
 
 // until final game & result
 func (t ticTacGame) Simulate()mcts.SimulationResult{
-	//total := 0.0
-	//for i := 0; i < 40 ; i++ {
-	//	total += t.simulate()
-	//}
 	return t.simulate(t.getPlayerTurn())
 }
 
@@ -129,8 +125,8 @@ func (t ticTacGame)winner()player{
 	return E
 }
 
-func (t ticTacGame) MaxPlays() uint{
-	total := uint(0)
+func (t ticTacGame) MaxPlays() int{
+	total := 0
 	for _,place := range t.board {
 		if place == E {
 			total++
@@ -139,15 +135,15 @@ func (t ticTacGame) MaxPlays() uint{
 	return total
 }
 
-func (t ticTacGame) Expand(idx uint) mcts.State{
+func (t ticTacGame) Expand(idx int) mcts.State{
 	if t.winner() != E {
 		return nil
 	}
 
-	free := make([]uint, 0)
+	free := make([]int, 0)
 	for idx,place := range t.board {
 		if place == E {
-			free = append(free, uint(idx))
+			free = append(free, idx)
 		}
 	}
 
@@ -185,7 +181,7 @@ func (t ticTacGame) newWithRandomMove(p player)(ticTacGame, bool){
 	newBoard[place] = p
 	return ticTacGame{
 		board:      newBoard,
-		lastMove:   uint(place),
+		lastMove:   place,
 		playerTurn: p,
 	}, true
 }
@@ -204,7 +200,7 @@ func (t ticTacGame)getPlayerTurn()player{
 	return t.playerTurn
 }
 
-func (t ticTacGame)newWithMove(idx uint, p player)ticTacGame{
+func (t ticTacGame)newWithMove(idx int, p player)ticTacGame{
 	newBoard := make([]player,len(t.board))
 	copy(newBoard, t.board)
 	newBoard[idx] = p
