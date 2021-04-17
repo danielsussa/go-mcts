@@ -207,14 +207,3 @@ func (t ticTacGame)newWithMove(idx int, p player)ticTacGame{
 
 	return ticTacGame{board: newBoard, playerTurn: p, lastMove: idx}
 }
-
-func newTicTacGame()ticTacGame{
-	return ticTacGame{
-		playerTurn: O,
-		board: []player{
-			E, E, E,
-			E, E, E,
-			E, E, E,
-		},
-	}
-}

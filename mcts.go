@@ -187,16 +187,6 @@ type nodeFinalScore struct {
 	total uint
 }
 
-func (mct *MonteCarloTree) Continue(state State) (FinalScore, error) {
-	node := mct.node.selectByState(state)
-	if node == nil {
-		return FinalScore{}, fmt.Errorf("node not found")
-	}
-	node.parent = nil
-	mct.node = node
-	return mct.start()
-}
-
 func (mct *MonteCarloTree) Start(initialState State) (FinalScore, error) {
 	mct.node = &Node{
 		state:    initialState,
