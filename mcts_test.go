@@ -20,41 +20,41 @@ func TestPolicyFunc(t *testing.T) {
 func TestNodeSelection(t *testing.T) {
 	maxPlays := uint(6)
 	parent := &Node{
-		score:      6,
-		nVisited:   14,
-		levelY:     0,
-		state:      nil,
-		child:      []*Node{},
-		parent:     nil,
-		maxPlays:   &maxPlays,
-		totalPlays: 6,
+		score:            6,
+		nVisited:         14,
+		levelY:           0,
+		state:            nil,
+		child:            []*Node{},
+		parent:           nil,
+		iterations:       &maxPlays,
+		currIterationIdx: 6,
 	}
 
 	c1 := &Node{
-		score:      3,
-		nVisited:   6,
-		levelY:     1,
-		parent:     parent,
-		maxPlays:   nil,
-		totalPlays: 0,
+		score:            3,
+		nVisited:         6,
+		levelY:           1,
+		parent:           parent,
+		iterations:       nil,
+		currIterationIdx: 0,
 	}
 
 	c2 := &Node{
-		score:      3,
-		nVisited:   5,
-		levelY:     1,
-		parent:     parent,
-		maxPlays:   nil,
-		totalPlays: 0,
+		score:            3,
+		nVisited:         5,
+		levelY:           1,
+		parent:           parent,
+		iterations:       nil,
+		currIterationIdx: 0,
 	}
 
 	c3 := &Node{
-		score:      3,
-		nVisited:   3,
-		levelY:     1,
-		parent:     parent,
-		maxPlays:   nil,
-		totalPlays: 0,
+		score:            3,
+		nVisited:         3,
+		levelY:           1,
+		parent:           parent,
+		iterations:       nil,
+		currIterationIdx: 0,
 	}
 
 	parent.child = append(parent.child, c1)
@@ -69,12 +69,12 @@ func TestNodeSelection(t *testing.T) {
 func TestNodeSelection2(t *testing.T) {
 	maxPlays := uint(6)
 	parent := &Node{
-		nVisited:   8,
-		state:      nil,
-		child:      []*Node{},
-		parent:     nil,
-		maxPlays:   &maxPlays,
-		totalPlays: 6,
+		nVisited:         8,
+		state:            nil,
+		child:            []*Node{},
+		parent:           nil,
+		iterations:       &maxPlays,
+		currIterationIdx: 6,
 	}
 
 	l1N1 := &Node{score: -1, nVisited: 1, parent: parent}

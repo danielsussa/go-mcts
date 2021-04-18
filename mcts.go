@@ -16,8 +16,8 @@ type Node struct {
 	child  []*Node
 	parent *Node
 
-	maxPlays   int
-	totalPlays int
+	iterations       []Iteration
+	currIterationIdx int
 }
 
 func (n *Node) rollOut() {
@@ -44,14 +44,18 @@ func (n *Node) backPropagate(result SimulationResult) {
 }
 
 func (n *Node) expand() (*Node, bool) {
-	if n.maxPlays == -1 {
-		n.maxPlays = n.state.Iterations()
+	if n.iterations == nil {
+		iteration := n.state.Iterations()
+		if iteration == nil {
+			return &Node{}, true
+		}
+		n.iterations = n.state.Iterations()
 	}
-	if n.maxPlays == n.totalPlays {
+	if len(n.iterations) == n.currIterationIdx {
 		return n, false
 	}
-	state := n.state.Expand(n.totalPlays)
-	n.totalPlays++
+	state := n.state.Expand(n.iterations[n.currIterationIdx])
+	n.currIterationIdx++
 	if state == nil {
 		return nil, false
 	}
@@ -64,10 +68,10 @@ func (n *Node) expand() (*Node, bool) {
 	}
 
 	child := &Node{
-		state:    state,
-		parent:   n,
-		maxPlays: -1,
-		levelY:   n.levelY + 1,
+		state:      state,
+		parent:     n,
+		iterations: nil,
+		levelY:     n.levelY + 1,
 	}
 	n.child = append(n.child, child)
 	return child, false
@@ -104,7 +108,7 @@ func (n *Node) selection(policy PolicyFunc) *Node {
 		if n.child == nil {
 			return n
 		}
-		if n.maxPlays == -1 || n.totalPlays < n.maxPlays {
+		if n.iterations == nil || n.currIterationIdx < len(n.iterations) {
 			return n
 		}
 		selectedNodes := getNodeScore(n.child, policy)
@@ -158,10 +162,14 @@ func defaultPolicyFunc() PolicyFunc {
 
 type State interface {
 	Simulate() SimulationResult
-	Expand(idx int) State
-	Iterations() int
+	Expand(iter Iteration) State
+	Iterations() []Iteration
 	Player() string
 	ID() string
+}
+
+type Iteration interface {
+	ID()interface{}
 }
 
 type SimulationResult struct {
@@ -192,8 +200,8 @@ type nodeFinalScore struct {
 func (mct *MonteCarloTree) Start(initialState State) (FinalScore, error) {
 	mct.firstStateID = initialState.ID()
 	mct.node = &Node{
-		state:    initialState,
-		maxPlays: -1,
+		state:      initialState,
+		iterations: nil,
 	}
 	return mct.start()
 }

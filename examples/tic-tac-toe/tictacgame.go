@@ -125,29 +125,26 @@ func (t ticTacGame)winner()player{
 	return E
 }
 
-func (t ticTacGame) Iterations() int{
-	total := 0
-	for _,place := range t.board {
-		if place == E {
-			total++
-		}
-	}
-	return total
+type iteration struct {
+	idx int
 }
 
-func (t ticTacGame) Expand(idx int) mcts.State{
-	if t.winner() != E {
-		return nil
-	}
+func (i iteration)ID()interface{} {
+	return i.idx
+}
 
-	free := make([]int, 0)
+func (t ticTacGame) Iterations() []mcts.Iteration {
+	iters := make([]mcts.Iteration, 0)
 	for idx,place := range t.board {
 		if place == E {
-			free = append(free, idx)
+			iters = append(iters, iteration{idx: idx})
 		}
 	}
+	return iters
+}
 
-	return t.newWithMove(free[idx], nextPlayer(t))
+func (t ticTacGame) Expand(iter mcts.Iteration) mcts.State {
+	return t.newWithMove(iter.ID().(int), nextPlayer(t))
 }
 
 func (t ticTacGame) ID() string{
