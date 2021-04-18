@@ -181,6 +181,7 @@ type MonteCarloTree struct {
 type FinalScore struct {
 	Iterations uint
 	NodeScore  []nodeFinalScore
+	TotalNodes uint
 }
 
 type nodeFinalScore struct {
@@ -199,6 +200,7 @@ func (mct *MonteCarloTree) Start(initialState State) (FinalScore, error) {
 
 func (mct *MonteCarloTree) start() (FinalScore, error) {
 	interactions := uint(0)
+	totalNodes := uint(0)
 	for {
 		node := mct.node.selection(mct.policy)
 
@@ -216,6 +218,7 @@ func (mct *MonteCarloTree) start() (FinalScore, error) {
 			node.rollOut()
 		} else {
 			childNode.rollOut()
+			totalNodes++
 		}
 
 		interactions++
@@ -239,6 +242,7 @@ func (mct *MonteCarloTree) start() (FinalScore, error) {
 
 	return FinalScore{
 		Iterations: mct.totalInteractions,
+		TotalNodes: totalNodes,
 		NodeScore:  ndScore,
 	}, nil
 }
@@ -249,7 +253,7 @@ type MonteCarloTreeConfig struct {
 }
 
 func NewMonteCarloTree(config MonteCarloTreeConfig) MonteCarloTree {
-	if config.MaxIterations == 0 || config.MaxTimeout == nil {
+	if config.MaxIterations == 0 && config.MaxTimeout == nil {
 		config.MaxIterations = 1000
 	}
 	return MonteCarloTree{
