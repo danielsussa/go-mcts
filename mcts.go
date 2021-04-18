@@ -45,7 +45,7 @@ func (n *Node) backPropagate(result SimulationResult) {
 
 func (n *Node) expand() (*Node, bool) {
 	if n.maxPlays == -1 {
-		n.maxPlays = n.state.MaxPlays()
+		n.maxPlays = n.state.Iterations()
 	}
 	if n.maxPlays == n.totalPlays {
 		return n, false
@@ -159,7 +159,7 @@ func defaultPolicyFunc() PolicyFunc {
 type State interface {
 	Simulate() SimulationResult
 	Expand(idx int) State
-	MaxPlays() int
+	Iterations() int
 	Player() string
 	ID() string
 }
@@ -175,6 +175,7 @@ type MonteCarloTree struct {
 	node              *Node
 	maxInteractions   uint
 	totalInteractions uint
+	firstStateID      string
 }
 
 type FinalScore struct {
@@ -188,6 +189,7 @@ type nodeFinalScore struct {
 }
 
 func (mct *MonteCarloTree) Start(initialState State) (FinalScore, error) {
+	mct.firstStateID = initialState.ID()
 	mct.node = &Node{
 		state:    initialState,
 		maxPlays: -1,
@@ -203,6 +205,11 @@ func (mct *MonteCarloTree) start() (FinalScore, error) {
 		childNode, duplicatedNode := node.expand()
 		if duplicatedNode {
 			return FinalScore{}, fmt.Errorf("duplication node")
+		}
+
+		// check for mutable objects
+		if mct.firstStateID != mct.node.state.ID() {
+			return FinalScore{}, fmt.Errorf("mutable node")
 		}
 
 		if childNode == nil {

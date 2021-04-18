@@ -125,7 +125,7 @@ func (t ticTacGame)winner()player{
 	return E
 }
 
-func (t ticTacGame) MaxPlays() int{
+func (t ticTacGame) Iterations() int{
 	total := 0
 	for _,place := range t.board {
 		if place == E {
