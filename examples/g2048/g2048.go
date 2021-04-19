@@ -25,12 +25,12 @@ func (g g2048) Iterations() []mcts.Iteration {
 }
 
 func (g g2048) Simulate()mcts.SimulationResult{
-	score := g.score
+	score := 0
 	L: for _, cord := range getFreePlaces(g.board){
 		board := copy2DArr(g.board)
 		addNumberOnBoardCord(cord, board)
 
-		for i := 0 ; i < 10 ; i++{
+		for i := 0 ; i < 5 ; i++{
 			//print2048(board, score)
 			allIterations := getAllIterations(board)
 			if len(allIterations) == 0 {
