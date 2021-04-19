@@ -9,6 +9,23 @@ import (
 type g2048 struct {
 	board [][]int
 	score int
+	stats g2048stats
+}
+
+type g2048stats struct {
+	statistics [][]int
+	iterations int
+}
+
+func (gs g2048stats)print(){
+	fmt.Println(fmt.Sprintf("------- STATS --------"))
+	for y := 0 ; y < 4 ; y++ {
+		fmt.Println()
+		for x := 0 ; x < 4 ; x++ {
+			fmt.Print(fmt.Sprintf("%2f ", float64(gs.statistics[x][y])/ float64(gs.iterations)))
+		}
+	}
+	fmt.Println()
 }
 
 type g2048Iteration struct {
@@ -209,6 +226,7 @@ func canMoveLeft(currX, currY int, board [][]int) newPosition {
 }
 
 func print2048(board [][]int, score int) {
+	fmt.Print("\033[H\033[2J")
 	fmt.Println(fmt.Sprintf("------- %v --------", score))
 	for y := 0 ; y < 4 ; y++ {
 		fmt.Println()
@@ -231,7 +249,30 @@ func (g g2048) Expand(i mcts.Iteration) mcts.State{
 	}else if i.ID().(string) == "L"{
 		score += computeLeft(board)
 	}
-	return g2048{board: board, score: g.score + score}
+	return g2048{board: board, score: g.score + score, stats: g2048stats{
+		statistics: addStatistic(g.board, g.stats.statistics),
+		iterations: g.stats.iterations + 1,
+	}}
+}
+
+func addStatistic(board [][]int, s [][]int)[][]int{
+	copyStatistic := copy2DArr(s)
+	m := struct {
+		y int
+		x int
+		number int
+	}{}
+	for y := 3 ; y >= 0 ; y-- {
+		for x := 0; x < 4; x++ {
+			if board[x][y] > m.number {
+				m.number = board[x][y]
+				m.x = x
+				m.y = y
+			}
+		}
+	}
+	copyStatistic[m.x][m.y]++
+	return copyStatistic
 }
 
 type coordinate struct {
@@ -357,12 +398,20 @@ func copy2DArr(src [][]int)[][]int{
 }
 
 func startNewGame()g2048 {
+	return g2048{
+		board: newArr(),
+		stats: g2048stats{
+			statistics: newArr(),
+			iterations: 0,
+		},
+	}
+}
+
+func newArr()[][]int {
 	board := make([][]int, 4)
 	board[0] = make([]int, 4)
 	board[1] = make([]int, 4)
 	board[2] = make([]int, 4)
 	board[3] = make([]int, 4)
-	return g2048{
-		board: board,
-	}
+	return board
 }

@@ -3,7 +3,9 @@ package g2048
 import (
 	"github.com/danielsussa/mcts"
 	"github.com/stretchr/testify/assert"
+	"math/rand"
 	"testing"
+	"time"
 )
 
 
@@ -28,10 +30,12 @@ func TestG2048(t *testing.T) {
 
 	totalIterations := 0
 
-	for {
-		//print2048(game2048.board, game2048.score)
+	rand.Seed(time.Now().Unix())
 
-		tree := mcts.NewMonteCarloTree(mcts.MonteCarloTreeConfig{MaxIterations: 200})
+	for {
+		print2048(game2048.board, game2048.score)
+
+		tree := mcts.NewMonteCarloTree(mcts.MonteCarloTreeConfig{MaxIterations: 512})
 		nodes, err := tree.Start(game2048)
 		assert.NoError(t, err)
 
@@ -39,17 +43,18 @@ func TestG2048(t *testing.T) {
 			break
 		}
 
-		if totalIterations % 200 == 0 {
-			print2048(game2048.board, game2048.score)
-		}
+		//if totalIterations % 200 == 0 {
+		//	print2048(game2048.board, game2048.score)
+		//}
 
 		game2048 = nodes.NodeScore[0].State.(g2048)
-		//print2048(game2048.board, game2048.score)
+		print2048(game2048.board, game2048.score)
 		// add new move
 		addNumberOnBoard(game2048.board)
 		totalIterations++
 	}
 	print2048(game2048.board, game2048.score)
+	game2048.stats.print()
 
 
 }
