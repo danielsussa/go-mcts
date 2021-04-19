@@ -26,21 +26,14 @@ func TestG2048(t *testing.T) {
 	game2048 := startNewGame()
 	addNumberOnBoard(game2048.board)
 
-	maxIter := uint(10)
 	totalIterations := 0
 
 	for {
 		//print2048(game2048.board, game2048.score)
 
-		tree := mcts.NewMonteCarloTree(mcts.MonteCarloTreeConfig{MaxIterations: maxIter})
+		tree := mcts.NewMonteCarloTree(mcts.MonteCarloTreeConfig{MaxIterations: 200})
 		nodes, err := tree.Start(game2048)
 		assert.NoError(t, err)
-
-		if game2048.score > 10000 {
-			maxIter = 300
-		}else if game2048.score > 40000 {
-			maxIter = 1200
-		}
 
 		if len(nodes.NodeScore) == 0 {
 			break

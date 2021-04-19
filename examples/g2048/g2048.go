@@ -25,30 +25,36 @@ func (g g2048) Iterations() []mcts.Iteration {
 }
 
 func (g g2048) Simulate()mcts.SimulationResult{
-	board := copy2DArr(g.board)
 	score := g.score
+	L: for _, cord := range getFreePlaces(g.board){
+		board := copy2DArr(g.board)
+		addNumberOnBoardCord(cord, board)
 
-	for i := 0 ; i < 100 ; i++{
-		//print2048(board, score)
-		allIterations := getAllIterations(board)
-		if len(allIterations) == 0 {
-			break
+		for i := 0 ; i < 10 ; i++{
+			//print2048(board, score)
+			allIterations := getAllIterations(board)
+			if len(allIterations) == 0 {
+				score = 0
+				break L
+			}
+			nextIteration := allIterations[rand.Intn(len(allIterations))].(g2048Iteration)
+			switch nextIteration.kind {
+			case "D":
+				score += computeDown(board)
+			case "U":
+				score += computeUp(board)
+			case "L":
+				score += computeLeft(board)
+			case "R":
+				score += computeRight(board)
+			}
+			// add random move
+			//print2048(board, score)
+			addNumberOnBoard(board)
 		}
-		nextIteration := allIterations[rand.Intn(len(allIterations))].(g2048Iteration)
-		switch nextIteration.kind {
-		case "D":
-			score += computeDown(board)
-		case "U":
-			score += computeUp(board)
-		case "L":
-			score += computeLeft(board)
-		case "R":
-			score += computeRight(board)
-		}
-		// add random move
-		//print2048(board, score)
-		addNumberOnBoard(board)
 	}
+
+
 	return mcts.SimulationResult{
 		Score:  float64(score),
 		Winner: "1",
@@ -233,7 +239,7 @@ type coordinate struct {
 	y int
 }
 
-func addNumberOnBoard(board [][]int){
+func getFreePlaces(board [][]int)[]coordinate{
 	freePlaces := make([]coordinate, 0)
 	for y := 3 ; y >= 0 ; y-- {
 		for x := 0 ; x < 4 ; x++ {
@@ -245,7 +251,11 @@ func addNumberOnBoard(board [][]int){
 			}
 		}
 	}
+	return freePlaces
+}
 
+func addNumberOnBoard(board [][]int){
+	freePlaces := getFreePlaces(board)
 	if len(freePlaces) == 0 {
 		return
 	}
@@ -257,6 +267,15 @@ func addNumberOnBoard(board [][]int){
 		val = 4
 	}
 	board[freePlace.x][freePlace.y] = val
+}
+
+func addNumberOnBoardCord(cord coordinate, board [][]int){
+	fRand := rand.Float64()
+	val := 2
+	if fRand >= 0.9 {
+		val = 4
+	}
+	board[cord.x][cord.y] = val
 }
 
 func computeDown(board [][]int)int{
