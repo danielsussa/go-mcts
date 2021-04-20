@@ -29,8 +29,7 @@ func newGame()player{
 
 	p := O
 	for {
-		move := false
-		game, move = game.newWithRandomMove(p)
+		move := game.randomMove(p)
 		if !move || game.winner() != E{
 			if game.winner() == O {
 				return game.winner()
@@ -48,7 +47,7 @@ func newGame()player{
 		if len(nodeScore.NodeScore) == 0 {
 			return game.winner()
 		}
-		game = game.newWithMove(nodeScore.NodeScore[0].State.(ticTacGame).lastMove, X)
+		game.move(nodeScore.NodeScore[0].State.(ticTacGame).lastMove, X)
 
 		if game.winner() != E {
 			return game.winner()

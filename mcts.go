@@ -21,22 +21,13 @@ type Node struct {
 }
 
 func (n *Node) rollOut() {
-	result := n.state.Simulate()
+	result := n.state.Copy().Simulate()
 	n.backPropagate(result)
 }
 
 func (n *Node) backPropagate(result SimulationResult) {
 	n.nVisited++
-	nodePlayer := n.state.Player()
-	if nodePlayer == result.Player && nodePlayer == result.Winner {
-		n.score += result.Score
-	} else if nodePlayer == result.Player && nodePlayer != result.Winner {
-		n.score -= result.Score
-	} else if nodePlayer != result.Player && nodePlayer == result.Winner {
-		n.score += result.Score
-	} else if nodePlayer != result.Player && nodePlayer != result.Winner {
-		n.score -= result.Score
-	}
+	n.score += result.Score
 	if n.parent == nil {
 		return
 	}
@@ -45,16 +36,16 @@ func (n *Node) backPropagate(result SimulationResult) {
 
 func (n *Node) expand() (*Node, bool) {
 	if n.iterations == nil {
-		iteration := n.state.Iterations()
+		iteration := n.state.Copy().Iterations()
 		if iteration == nil {
 			return &Node{}, true
 		}
-		n.iterations = n.state.Iterations()
+		n.iterations = n.state.Copy().Iterations()
 	}
 	if len(n.iterations) == n.currIterationIdx {
 		return n, false
 	}
-	state := n.state.Expand(n.iterations[n.currIterationIdx])
+	state := n.state.Copy().Expand(n.iterations[n.currIterationIdx])
 	n.currIterationIdx++
 	if state == nil {
 		return nil, false
@@ -164,7 +155,7 @@ type State interface {
 	Simulate() SimulationResult
 	Expand(iter Iteration) State
 	Iterations() []Iteration
-	Player() string
+	Copy()State
 	ID() string
 }
 
@@ -200,7 +191,7 @@ type nodeFinalScore struct {
 func (mct *MonteCarloTree) Start(initialState State) (FinalScore, error) {
 	mct.firstStateID = initialState.ID()
 	mct.node = &Node{
-		state:      initialState,
+		state:      initialState.Copy(),
 		iterations: nil,
 	}
 	return mct.start()

@@ -36,6 +36,17 @@ func (gi g2048Iteration) ID()interface{}{
 	return gi.kind
 }
 
+func (g g2048) Copy() mcts.State {
+	return g2048{
+		board: copy2DArr(g.board),
+		score: g.score,
+		stats: g2048stats{
+			statistics: copy2DArr(g.stats.statistics),
+			iterations: g.stats.iterations,
+		},
+	}
+}
+
 func (g g2048) Iterations() []mcts.Iteration {
 	iterations := getAllIterations(g.board)
 	return iterations
@@ -44,12 +55,11 @@ func (g g2048) Iterations() []mcts.Iteration {
 func (g g2048) Simulate()mcts.SimulationResult{
 	score := 0
 	L: for _, cord := range getFreePlaces(g.board){
-		board := copy2DArr(g.board)
-		addNumberOnBoardCord(cord, board)
+		addNumberOnBoardCord(cord, g.board)
 
 		for i := 0 ; i < 5 ; i++{
 			//print2048(board, score)
-			allIterations := getAllIterations(board)
+			allIterations := getAllIterations(g.board)
 			if len(allIterations) == 0 {
 				score = 0
 				break L
@@ -57,17 +67,17 @@ func (g g2048) Simulate()mcts.SimulationResult{
 			nextIteration := allIterations[rand.Intn(len(allIterations))].(g2048Iteration)
 			switch nextIteration.kind {
 			case "D":
-				score += computeDown(board)
+				score += computeDown(g.board)
 			case "U":
-				score += computeUp(board)
+				score += computeUp(g.board)
 			case "L":
-				score += computeLeft(board)
+				score += computeLeft(g.board)
 			case "R":
-				score += computeRight(board)
+				score += computeRight(g.board)
 			}
 			// add random move
 			//print2048(board, score)
-			addNumberOnBoard(board)
+			addNumberOnBoard(g.board)
 		}
 	}
 
@@ -238,18 +248,17 @@ func print2048(board [][]int, score int) {
 }
 
 func (g g2048) Expand(i mcts.Iteration) mcts.State{
-	board := copy2DArr(g.board)
 	score := 0
 	if i.ID().(string) == "D"{
-		score += computeDown(board)
+		score += computeDown(g.board)
 	}else if i.ID().(string) == "U"{
-		score += computeUp(board)
+		score += computeUp(g.board)
 	}else if i.ID().(string) == "R"{
-		score += computeRight(board)
+		score += computeRight(g.board)
 	}else if i.ID().(string) == "L"{
-		score += computeLeft(board)
+		score += computeLeft(g.board)
 	}
-	return g2048{board: board, score: g.score + score, stats: g2048stats{
+	return g2048{board: g.board, score: g.score + score, stats: g2048stats{
 		statistics: addStatistic(g.board, g.stats.statistics),
 		iterations: g.stats.iterations + 1,
 	}}

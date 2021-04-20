@@ -20,16 +20,19 @@ type ticTacGame struct {
 	lastMove   int
 }
 
-func (t ticTacGame) Player()string{
-	if t.playerTurn == E {
-		return string(nextPlayer(t))
-	}
-	return string(t.playerTurn)
-}
-
 // until final game & result
 func (t ticTacGame) Simulate()mcts.SimulationResult{
 	return t.simulate(t.getPlayerTurn())
+}
+
+func (t ticTacGame) Copy()mcts.State{
+	newBoard := make([]player,len(t.board))
+	copy(newBoard, t.board)
+	return ticTacGame{
+		board:      newBoard,
+		playerTurn: t.playerTurn,
+		lastMove:   t.lastMove,
+	}
 }
 
 func (t ticTacGame) simulate(startPlayer player)mcts.SimulationResult{
@@ -41,7 +44,7 @@ func (t ticTacGame) simulate(startPlayer player)mcts.SimulationResult{
 			Player: string(startPlayer),
 		}
 	}
-	game, moved := t.newWithRandomMove(p)
+	moved := t.randomMove(p)
 	if !moved {
 		return mcts.SimulationResult{
 			Score: t.winner().toScore(),
@@ -52,12 +55,12 @@ func (t ticTacGame) simulate(startPlayer player)mcts.SimulationResult{
 
 	playerWinner := E
 	for {
-		playerWinner = game.winner()
+		playerWinner = t.winner()
 		if playerWinner != E {
 			break
 		}
-		p = nextPlayer(game)
-		game, moved = game.newWithRandomMove(p)
+		p = nextPlayer(t)
+		moved = t.randomMove(p)
 		if !moved {
 			return mcts.SimulationResult{
 				Score: 0,
@@ -89,7 +92,7 @@ func (p player) toScore()float64 {
 	case E:
 		return 0
 	case O:
-		return 1
+		return -1
 	}
 	return 0
 }
@@ -144,7 +147,8 @@ func (t ticTacGame) Iterations() []mcts.Iteration {
 }
 
 func (t ticTacGame) Expand(iter mcts.Iteration) mcts.State {
-	return t.newWithMove(iter.ID().(int), nextPlayer(t))
+	t.move(iter.ID().(int), nextPlayer(t))
+	return t
 }
 
 func (t ticTacGame) ID() string{
@@ -161,26 +165,20 @@ func (t ticTacGame) newWithNextPlayer()ticTacGame{
 	}
 }
 
-func (t ticTacGame) newWithRandomMove(p player)(ticTacGame, bool){
+func (t ticTacGame) randomMove(p player)bool{
 	free := make([]int, 0)
 
-	newBoard := make([]player,len(t.board))
-	copy(newBoard, t.board)
 	for idx,place := range t.board {
 		if place == E {
 			free = append(free, idx)
 		}
 	}
 	if len(free) == 0 {
-		return ticTacGame{}, false
+		return false
 	}
 	place := free[rand.Intn(len(free))]
-	newBoard[place] = p
-	return ticTacGame{
-		board:      newBoard,
-		lastMove:   place,
-		playerTurn: p,
-	}, true
+	t.board[place] = p
+	return true
 }
 
 func (t ticTacGame) print() {
@@ -197,10 +195,6 @@ func (t ticTacGame)getPlayerTurn()player{
 	return t.playerTurn
 }
 
-func (t ticTacGame)newWithMove(idx int, p player)ticTacGame{
-	newBoard := make([]player,len(t.board))
-	copy(newBoard, t.board)
-	newBoard[idx] = p
-
-	return ticTacGame{board: newBoard, playerTurn: p, lastMove: idx}
+func (t ticTacGame) move(idx int, p player){
+	t.board[idx] = p
 }
