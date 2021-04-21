@@ -165,8 +165,6 @@ type Iteration interface {
 
 type SimulationResult struct {
 	Score  float64
-	Winner string
-	Player string
 }
 
 type MonteCarloTree struct {
