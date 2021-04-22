@@ -35,7 +35,7 @@ func TestG2048(t *testing.T) {
 	for {
 		print2048(game2048.board, game2048.score)
 
-		tree := mcts.NewMonteCarloTree(mcts.MonteCarloTreeConfig{MaxIterations: 16})
+		tree := mcts.NewMonteCarloTree(mcts.MonteCarloTreeConfig{MaxIterations: 64})
 		nodes, err := tree.Start(game2048)
 		assert.NoError(t, err)
 

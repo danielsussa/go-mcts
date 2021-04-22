@@ -53,45 +53,36 @@ func (g g2048) Iterations() []mcts.Iteration {
 }
 
 func (g g2048) Simulate()mcts.SimulationResult{
-	score := 0
-	L: for _, cord := range getFreePlaces(g.board){
-		addNumberOnBoardCord(cord, g.board)
+	score := g.score
 
-		for i := 0 ; i < 5 ; i++{
-			//print2048(board, score)
-			allIterations := getAllIterations(g.board)
-			if len(allIterations) == 0 {
-				score = 0
-				break L
-			}
-			nextIteration := allIterations[rand.Intn(len(allIterations))].(g2048Iteration)
-			switch nextIteration.kind {
-			case "D":
-				score += computeDown(g.board)
-			case "U":
-				score += computeUp(g.board)
-			case "L":
-				score += computeLeft(g.board)
-			case "R":
-				score += computeRight(g.board)
-			}
-			// add random move
-			//print2048(board, score)
-			addNumberOnBoard(g.board)
+	for i := 0 ; i < 3 ; i++{
+		//print2048(board, score)
+		allIterations := getAllIterations(g.board)
+		if len(allIterations) == 0 {
+			score = 0
+			break
 		}
+		nextIteration := allIterations[rand.Intn(len(allIterations))].(g2048Iteration)
+		switch nextIteration.kind {
+		case "D":
+			score += computeDown(g.board)
+		case "U":
+			score += computeUp(g.board)
+		case "L":
+			score += computeLeft(g.board)
+		case "R":
+			score += computeRight(g.board)
+		}
+		// add random move
+		//print2048(board, score)
+		addNumberOnBoard(g.board)
 	}
-
 
 	return mcts.SimulationResult{
 		Score:  float64(score),
-		Winner: "1",
-		Player: "1",
 	}
 }
 
-func (g g2048) Player()string{
-	return "1"
-}
 
 func (g g2048) ID() string{
 	return fmt.Sprintf("%v", g.board)

@@ -18,6 +18,7 @@ type Node struct {
 
 	iterations       []Iteration
 	currIterationIdx int
+	id               string
 }
 
 func (n *Node) rollOut() {
@@ -62,6 +63,7 @@ func (n *Node) expand() (*Node, bool) {
 		state:      state,
 		parent:     n,
 		iterations: nil,
+		id:         state.ID(),
 		levelY:     n.levelY + 1,
 	}
 	n.child = append(n.child, child)
@@ -155,16 +157,16 @@ type State interface {
 	Simulate() SimulationResult
 	Expand(iter Iteration) State
 	Iterations() []Iteration
-	Copy()State
+	Copy() State
 	ID() string
 }
 
 type Iteration interface {
-	ID()interface{}
+	ID() interface{}
 }
 
 type SimulationResult struct {
-	Score  float64
+	Score float64
 }
 
 type MonteCarloTree struct {
@@ -191,6 +193,7 @@ func (mct *MonteCarloTree) Start(initialState State) (FinalScore, error) {
 	mct.node = &Node{
 		state:      initialState.Copy(),
 		iterations: nil,
+		id:         initialState.ID(),
 	}
 	return mct.start()
 }
