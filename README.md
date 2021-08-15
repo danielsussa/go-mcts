@@ -19,9 +19,9 @@ type  State  interface {
 
 **Expand:** Node expansion based on an previews Iteration sent
 
-**Copy:** Deep copy of State
+**Copy:** Deep copy of State. When implementing this interface, take care of copying objets in a way that doesn't carry any reference from the other one
 
-**ID:** State identifier.
+**ID:** State identifier.It's a way to prevent duplicated instances
 
 This implementation is based on example of [tic-tac-toe AI](https://vgarciasc.github.io/mcts-viz) and it was implemented with one expasion per iteration instead of expand all, to prevent memory overhead.
 
