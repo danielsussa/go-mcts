@@ -40,16 +40,12 @@ func (t ticTacGame) simulate(startPlayer player)mcts.SimulationResult{
 	if t.winner() != E {
 		return mcts.SimulationResult{
 			Score: t.winner().toScore(),
-			Winner:string(t.winner()),
-			Player: string(startPlayer),
 		}
 	}
 	moved := t.randomMove(p)
 	if !moved {
 		return mcts.SimulationResult{
 			Score: t.winner().toScore(),
-			Winner:string(t.winner()),
-			Player: string(startPlayer),
 		}
 	}
 
@@ -64,15 +60,11 @@ func (t ticTacGame) simulate(startPlayer player)mcts.SimulationResult{
 		if !moved {
 			return mcts.SimulationResult{
 				Score: 0,
-				Winner: string(E),
-				Player: string(startPlayer),
 			}
 		}
 	}
 	return  mcts.SimulationResult{
 		Score: playerWinner.toScore(),
-		Winner: string(playerWinner),
-		Player: string(startPlayer),
 	}
 }
 

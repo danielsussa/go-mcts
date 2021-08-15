@@ -23,6 +23,8 @@ type  State  interface {
 
 **ID:** State identifier.It's a way to prevent duplicated instances
 
+Ok.
+
 This implementation is based on example of [tic-tac-toe AI](https://vgarciasc.github.io/mcts-viz) and it was implemented with one expasion per iteration instead of expand all, to prevent memory overhead.
 
 Check some examples here:
