@@ -16,7 +16,7 @@ type Node struct {
 	child  []*Node
 	parent *Node
 
-	iterations       []Iteration
+	iterations       []interface{}
 	currIterationIdx int
 	id               string
 }
@@ -155,14 +155,10 @@ func defaultPolicyFunc() PolicyFunc {
 
 type State interface {
 	Simulate() SimulationResult
-	Expand(iter Iteration) State
-	Iterations() []Iteration
+	Expand(iter interface{}) State
+	Iterations() []interface{}
 	Copy() State
 	ID() string
-}
-
-type Iteration interface {
-	ID() interface{}
 }
 
 type SimulationResult struct {
