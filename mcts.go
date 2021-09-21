@@ -1,6 +1,7 @@
 package mcts
 
 import (
+	"fmt"
 	"math"
 	"sort"
 	"time"
@@ -85,21 +86,21 @@ func (n *Node) backPropagate(score float64) {
 	n.parent.backPropagate(score)
 }
 
-func (n *Node) expand() *Node {
+func (n *Node) expand() (*Node, error) {
 	if n.iterations == nil {
 		iteration := n.state.Copy().Iterations()
 		if iteration == nil {
-			return &Node{}
+			return nil, fmt.Errorf("iterations return nil")
 		}
-		n.iterations = n.state.Copy().Iterations()
+		n.iterations = iteration
 	}
 	if len(n.iterations) == n.currIterationIdx {
-		return n
+		return n, nil
 	}
 	state := n.state.Copy().Expand(n.iterations[n.currIterationIdx])
 	n.currIterationIdx++
 	if state == nil {
-		return nil
+		return nil, fmt.Errorf("expand return nil")
 	}
 
 	child := &Node{
@@ -109,7 +110,7 @@ func (n *Node) expand() *Node {
 		levelY:     n.levelY + 1,
 	}
 	n.child = append(n.child, child)
-	return child
+	return child, nil
 }
 
 func (n *Node) getParentNVisited() uint {
@@ -215,7 +216,10 @@ func (mct *MonteCarloTree) start() (FinalScore, error) {
 	for {
 		node := mct.node.selection(mct.policy)
 
-		childNode := node.expand()
+		childNode, err := node.expand()
+		if err != nil {
+			return FinalScore{}, err
+		}
 
 		if childNode == nil {
 			node.rollOut(mct.simulationsConfig)
