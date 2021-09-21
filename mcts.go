@@ -21,18 +21,69 @@ type Node struct {
 	id               string
 }
 
-func (n *Node) rollOut() {
-	result := n.state.Copy().Simulate()
-	n.backPropagate(result)
+func (n *Node) rollOut(simConfig SimulationConfig) {
+	score := 0.0
+	switch simConfig.Strategy {
+	case Avg:
+		score = n.avgStrategy(simConfig)
+	case Min:
+		score = n.minStrategy(simConfig)
+	case Max:
+		score = n.maxStrategy(simConfig)
+	default:
+		score = n.avgStrategy(simConfig)
+	}
+	n.backPropagate(score)
 }
 
-func (n *Node) backPropagate(result SimulationResult) {
+func (n *Node) avgStrategy(simConfig SimulationConfig) float64 {
+	score := 0.0
+	for i := 0; i <= simConfig.Ratio; i++ {
+		score += n.state.Copy().Simulate()
+	}
+	return score
+}
+
+func (n *Node) minStrategy(simConfig SimulationConfig) float64 {
+	minScore := 0.0
+	for i := 0; i <= simConfig.Ratio; i++ {
+		if i == 0 {
+			minScore = n.state.Copy().Simulate()
+			if minScore <= 0 {
+				break
+			}
+		} else {
+			currScore := n.state.Copy().Simulate()
+			if currScore < minScore {
+				minScore = currScore
+			}
+		}
+	}
+	return minScore
+}
+
+func (n *Node) maxStrategy(simConfig SimulationConfig) float64 {
+	maxScore := 0.0
+	for i := 0; i <= simConfig.Ratio; i++ {
+		if i == 0 {
+			maxScore = n.state.Copy().Simulate()
+		} else {
+			currScore := n.state.Copy().Simulate()
+			if currScore > maxScore {
+				maxScore = currScore
+			}
+		}
+	}
+	return maxScore
+}
+
+func (n *Node) backPropagate(score float64) {
 	n.nVisited++
-	n.score += result.Score
+	n.score += score
 	if n.parent == nil {
 		return
 	}
-	n.parent.backPropagate(result)
+	n.parent.backPropagate(score)
 }
 
 func (n *Node) expand() (*Node, bool) {
@@ -153,16 +204,13 @@ func defaultPolicyFunc() PolicyFunc {
 	}
 }
 
+// think about ID
 type State interface {
-	Simulate() SimulationResult
+	Simulate() float64
 	Expand(iter interface{}) State
 	Iterations() []interface{}
 	Copy() State
 	ID() string
-}
-
-type SimulationResult struct {
-	Score float64
 }
 
 type MonteCarloTree struct {
@@ -170,6 +218,7 @@ type MonteCarloTree struct {
 	node              *Node
 	maxInteractions   uint
 	totalInteractions uint
+	simulationsConfig SimulationConfig
 	firstStateID      string
 }
 
@@ -211,9 +260,9 @@ func (mct *MonteCarloTree) start() (FinalScore, error) {
 		}
 
 		if childNode == nil {
-			node.rollOut()
+			node.rollOut(mct.simulationsConfig)
 		} else {
-			childNode.rollOut()
+			childNode.rollOut(mct.simulationsConfig)
 			totalNodes++
 		}
 
@@ -244,16 +293,31 @@ func (mct *MonteCarloTree) start() (FinalScore, error) {
 }
 
 type MonteCarloTreeConfig struct {
-	MaxTimeout    *time.Duration
-	MaxIterations uint
+	MaxTimeout       *time.Duration
+	MaxIterations    uint
+	SimulationConfig SimulationConfig
 }
+
+type SimulationConfig struct {
+	Ratio    int
+	Strategy ScoreStrategy
+}
+
+type ScoreStrategy string
+
+const (
+	Min ScoreStrategy = "min"
+	Max ScoreStrategy = "max"
+	Avg ScoreStrategy = "avg"
+)
 
 func NewMonteCarloTree(config MonteCarloTreeConfig) MonteCarloTree {
 	if config.MaxIterations == 0 && config.MaxTimeout == nil {
 		config.MaxIterations = 1000
 	}
 	return MonteCarloTree{
-		policy:          defaultPolicyFunc(),
-		maxInteractions: config.MaxIterations,
+		policy:            defaultPolicyFunc(),
+		maxInteractions:   config.MaxIterations,
+		simulationsConfig: config.SimulationConfig,
 	}
 }

@@ -7,12 +7,12 @@ import (
 )
 
 type player string
+
 const (
 	E player = "E"
 	X player = "X"
 	O player = "O"
 )
-
 
 type ticTacGame struct {
 	board      []player
@@ -21,12 +21,12 @@ type ticTacGame struct {
 }
 
 // until final game & result
-func (t ticTacGame) Simulate()mcts.SimulationResult{
+func (t ticTacGame) Simulate() mcts.SimulationResult {
 	return t.simulate(t.getPlayerTurn())
 }
 
-func (t ticTacGame) Copy()mcts.State{
-	newBoard := make([]player,len(t.board))
+func (t ticTacGame) Copy() mcts.State {
+	newBoard := make([]player, len(t.board))
 	copy(newBoard, t.board)
 	return ticTacGame{
 		board:      newBoard,
@@ -35,7 +35,7 @@ func (t ticTacGame) Copy()mcts.State{
 	}
 }
 
-func (t ticTacGame) simulate(startPlayer player)mcts.SimulationResult{
+func (t ticTacGame) simulate(startPlayer player) mcts.SimulationResult {
 	p := startPlayer
 	if t.winner() != E {
 		return mcts.SimulationResult{
@@ -63,12 +63,12 @@ func (t ticTacGame) simulate(startPlayer player)mcts.SimulationResult{
 			}
 		}
 	}
-	return  mcts.SimulationResult{
+	return mcts.SimulationResult{
 		Score: playerWinner.toScore(),
 	}
 }
 
-func nextPlayer(game ticTacGame)player {
+func nextPlayer(game ticTacGame) player {
 	if game.playerTurn == E {
 		return X
 	}
@@ -77,7 +77,7 @@ func nextPlayer(game ticTacGame)player {
 	}
 	return X
 }
-func (p player) toScore()float64 {
+func (p player) toScore() float64 {
 	switch p {
 	case X:
 		return 1
@@ -89,78 +89,69 @@ func (p player) toScore()float64 {
 	return 0
 }
 
-func (t ticTacGame)winner()player{
+func (t ticTacGame) winner() player {
 	b := t.board
-	if b[0] == b[1] && b[0] == b[2] && b[0] != E{
+	if b[0] == b[1] && b[0] == b[2] && b[0] != E {
 		return b[0]
 	}
-	if b[3] == b[4] && b[3] == b[5] && b[3] != E{
+	if b[3] == b[4] && b[3] == b[5] && b[3] != E {
 		return b[3]
 	}
-	if b[6] == b[7] && b[6] == b[8] && b[6] != E{
+	if b[6] == b[7] && b[6] == b[8] && b[6] != E {
 		return b[6]
 	}
 
-	if b[0] == b[3] && b[0] == b[6] && b[0] != E{
+	if b[0] == b[3] && b[0] == b[6] && b[0] != E {
 		return b[0]
 	}
-	if b[1] == b[4] && b[1] == b[7] && b[1] != E{
+	if b[1] == b[4] && b[1] == b[7] && b[1] != E {
 		return b[1]
 	}
-	if b[2] == b[5] && b[2] == b[8] && b[2] != E{
+	if b[2] == b[5] && b[2] == b[8] && b[2] != E {
 		return b[2]
 	}
 
-	if b[0] == b[4] && b[0] == b[8] && b[0] != E{
+	if b[0] == b[4] && b[0] == b[8] && b[0] != E {
 		return b[0]
 	}
-	if b[2] == b[4] && b[2] == b[6] && b[2] != E{
+	if b[2] == b[4] && b[2] == b[6] && b[2] != E {
 		return b[2]
 	}
 	return E
 }
 
-type iteration struct {
-	idx int
-}
-
-func (i iteration)ID()interface{} {
-	return i.idx
-}
-
-func (t ticTacGame) Iterations() []mcts.Iteration {
-	iters := make([]mcts.Iteration, 0)
-	for idx,place := range t.board {
+func (t ticTacGame) Iterations() []interface{} {
+	iters := make([]interface{}, 0)
+	for idx, place := range t.board {
 		if place == E {
-			iters = append(iters, iteration{idx: idx})
+			iters = append(iters, idx)
 		}
 	}
 	return iters
 }
 
-func (t ticTacGame) Expand(iter mcts.Iteration) mcts.State {
-	t.move(iter.ID().(int), nextPlayer(t))
+func (t ticTacGame) Expand(id interface{}) mcts.State {
+	t.move(id.(int), nextPlayer(t))
 	return t
 }
 
-func (t ticTacGame) ID() string{
+func (t ticTacGame) ID() string {
 	return fmt.Sprintf("%v", t.board)
 }
 
-
-func (t ticTacGame) newWithNextPlayer()ticTacGame{
-	newBoard := make([]player,len(t.board))
+func (t ticTacGame) newWithNextPlayer() ticTacGame {
+	newBoard := make([]player, len(t.board))
 	copy(newBoard, t.board)
 	return ticTacGame{
-		board: newBoard,
+		board:      newBoard,
 		playerTurn: nextPlayer(t),
 	}
 }
 
-func (t ticTacGame) randomMove(p player)bool{
+func (t ticTacGame) randomMove(p player) bool {
 	free := make([]int, 0)
 
-	for idx,place := range t.board {
+	for idx, place := range t.board {
 		if place == E {
 			free = append(free, idx)
 		}
@@ -180,13 +171,13 @@ func (t ticTacGame) print() {
 	fmt.Println(fmt.Sprintf("%s|%s|%s", t.board[6], t.board[7], t.board[8]))
 }
 
-func (t ticTacGame)getPlayerTurn()player{
+func (t ticTacGame) getPlayerTurn() player {
 	if t.playerTurn == E {
 		return nextPlayer(t)
 	}
 	return t.playerTurn
 }
 
-func (t ticTacGame) move(idx int, p player){
+func (t ticTacGame) move(idx int, p player) {
 	t.board[idx] = p
 }

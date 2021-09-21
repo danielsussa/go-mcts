@@ -17,23 +17,15 @@ type g2048stats struct {
 	iterations int
 }
 
-func (gs g2048stats)print(){
+func (gs g2048stats) print() {
 	fmt.Println(fmt.Sprintf("------- STATS --------"))
-	for y := 0 ; y < 4 ; y++ {
+	for y := 0; y < 4; y++ {
 		fmt.Println()
-		for x := 0 ; x < 4 ; x++ {
-			fmt.Print(fmt.Sprintf("%2f ", float64(gs.statistics[x][y])/ float64(gs.iterations)))
+		for x := 0; x < 4; x++ {
+			fmt.Print(fmt.Sprintf("%2f ", float64(gs.statistics[x][y])/float64(gs.iterations)))
 		}
 	}
 	fmt.Println()
-}
-
-type g2048Iteration struct {
-	kind string
-}
-
-func (gi g2048Iteration) ID()interface{}{
-	return gi.kind
 }
 
 func (g g2048) Copy() mcts.State {
@@ -47,23 +39,22 @@ func (g g2048) Copy() mcts.State {
 	}
 }
 
-func (g g2048) Iterations() []mcts.Iteration {
+func (g g2048) Iterations() []interface{} {
 	iterations := getAllIterations(g.board)
 	return iterations
 }
 
-func (g g2048) Simulate()mcts.SimulationResult{
+func (g g2048) Simulate() float64 {
 	score := g.score
 
-	for i := 0 ; i < 3 ; i++{
+	for i := 0; i < 3; i++ {
 		//print2048(board, score)
 		allIterations := getAllIterations(g.board)
 		if len(allIterations) == 0 {
 			score = 0
 			break
 		}
-		nextIteration := allIterations[rand.Intn(len(allIterations))].(g2048Iteration)
-		switch nextIteration.kind {
+		switch allIterations[rand.Intn(len(allIterations))] {
 		case "D":
 			score += computeDown(g.board)
 		case "U":
@@ -78,78 +69,75 @@ func (g g2048) Simulate()mcts.SimulationResult{
 		addNumberOnBoard(g.board)
 	}
 
-	return mcts.SimulationResult{
-		Score:  float64(score),
-	}
+	return float64(score)
 }
 
-
-func (g g2048) ID() string{
+func (g g2048) ID() string {
 	return fmt.Sprintf("%v", g.board)
 }
 
-func getAllIterations(board [][]int) []mcts.Iteration{
+func getAllIterations(board [][]int) []interface{} {
 	down := 0
 	up := 0
 	left := 0
 	right := 0
-	for y := 0 ; y < 4 ; y++ {
-		if down + up + left + right == 4 {
+	for y := 0; y < 4; y++ {
+		if down+up+left+right == 4 {
 			break
 		}
 		for x := 0; x < 4; x++ {
 			if board[x][y] == 0 {
 				continue
 			}
-			if canMoveDown(x, y, board).canMove{
+			if canMoveDown(x, y, board).canMove {
 				down = 1
 			}
-			if canMoveUp(x, y, board).canMove{
+			if canMoveUp(x, y, board).canMove {
 				up = 1
 			}
-			if canMoveLeft(x, y, board).canMove{
+			if canMoveLeft(x, y, board).canMove {
 				left = 1
 			}
-			if canMoveRight(x, y, board).canMove{
+			if canMoveRight(x, y, board).canMove {
 				right = 1
 			}
 		}
 	}
 
-	iters := make([]mcts.Iteration, 0)
+	iters := make([]interface{}, 0)
 	if up == 1 {
-		iters= append(iters, g2048Iteration{kind: "U"})
+		iters = append(iters, "U")
 	}
 	if down == 1 {
-		iters= append(iters, g2048Iteration{kind: "D"})
+		iters = append(iters, "D")
 	}
 	if right == 1 {
-		iters= append(iters, g2048Iteration{kind: "R"})
+		iters = append(iters, "R")
 	}
 	if left == 1 {
-		iters= append(iters, g2048Iteration{kind: "L"})
+		iters = append(iters, "L")
 	}
 	return iters
 }
 
 type newPosition struct {
 	canMove bool
-	x int
-	y int
+	x       int
+	y       int
 }
 
-func canMoveRight(currX, currY int, board [][]int)newPosition {
+func canMoveRight(currX, currY int, board [][]int) newPosition {
 	posEval := newPosition{}
 	currVal := board[currX][currY]
 	if currVal == 0 {
 		return newPosition{}
 	}
-	for x := currX ; x < 4 ; x++{
+	for x := currX; x < 4; x++ {
 		if currX == x {
 			continue
 		}
 		posVal := board[x][currY]
-		if posVal == 0 || posVal == currVal{
+		if posVal == 0 || posVal == currVal {
 			posEval = newPosition{
 				canMove: true,
 				x:       x,
@@ -160,18 +148,18 @@ func canMoveRight(currX, currY int, board [][]int)newPosition {
 	return posEval
 }
 
-func canMoveDown(currX, currY int, board [][]int)newPosition {
+func canMoveDown(currX, currY int, board [][]int) newPosition {
 	posEval := newPosition{}
 	currVal := board[currX][currY]
 	if currVal == 0 {
 		return newPosition{}
 	}
-	for y := currY ; y < 4 ; y++{
+	for y := currY; y < 4; y++ {
 		if currY == y {
 			continue
 		}
 		posVal := board[currX][y]
-		if posVal == 0 || posVal == currVal{
+		if posVal == 0 || posVal == currVal {
 			posEval = newPosition{
 				canMove: true,
 				x:       currX,
@@ -188,12 +176,12 @@ func canMoveUp(currX, currY int, board [][]int) newPosition {
 	if currVal == 0 {
 		return newPosition{}
 	}
-	for y := currY ; y >= 0 ; y--{
+	for y := currY; y >= 0; y-- {
 		if currY == y {
 			continue
 		}
 		posVal := board[currX][y]
-		if posVal == 0 || posVal == currVal{
+		if posVal == 0 || posVal == currVal {
 			posEval = newPosition{
 				canMove: true,
 				x:       currX,
@@ -210,12 +198,12 @@ func canMoveLeft(currX, currY int, board [][]int) newPosition {
 	if currVal == 0 {
 		return newPosition{}
 	}
-	for x := currX ; x >= 0 ; x--{
+	for x := currX; x >= 0; x-- {
 		if currX == x {
 			continue
 		}
 		posVal := board[x][currY]
-		if posVal == 0 || posVal == currVal{
+		if posVal == 0 || posVal == currVal {
 			posEval = newPosition{
 				canMove: true,
 				x:       x,
@@ -229,24 +217,24 @@ func canMoveLeft(currX, currY int, board [][]int) newPosition {
 func print2048(board [][]int, score int) {
 	fmt.Print("\033[H\033[2J")
 	fmt.Println(fmt.Sprintf("------- %v --------", score))
-	for y := 0 ; y < 4 ; y++ {
+	for y := 0; y < 4; y++ {
 		fmt.Println()
-		for x := 0 ; x < 4 ; x++ {
+		for x := 0; x < 4; x++ {
 			fmt.Print(fmt.Sprintf("%-6d", board[x][y]))
 		}
 	}
 	fmt.Println()
 }
 
-func (g g2048) Expand(i mcts.Iteration) mcts.State{
+func (g g2048) Expand(i interface{}) mcts.State {
 	score := 0
-	if i.ID().(string) == "D"{
+	if i.(string) == "D" {
 		score += computeDown(g.board)
-	}else if i.ID().(string) == "U"{
+	} else if i.(string) == "U" {
 		score += computeUp(g.board)
-	}else if i.ID().(string) == "R"{
+	} else if i.(string) == "R" {
 		score += computeRight(g.board)
-	}else if i.ID().(string) == "L"{
+	} else if i.(string) == "L" {
 		score += computeLeft(g.board)
 	}
 	return g2048{board: g.board, score: g.score + score, stats: g2048stats{
@@ -255,14 +243,14 @@ func (g g2048) Expand(i mcts.Iteration) mcts.State{
 	}}
 }
 
-func addStatistic(board [][]int, s [][]int)[][]int{
+func addStatistic(board [][]int, s [][]int) [][]int {
 	copyStatistic := copy2DArr(s)
 	m := struct {
-		y int
-		x int
+		y      int
+		x      int
 		number int
 	}{}
-	for y := 3 ; y >= 0 ; y-- {
+	for y := 3; y >= 0; y-- {
 		for x := 0; x < 4; x++ {
 			if board[x][y] > m.number {
 				m.number = board[x][y]
@@ -280,10 +268,10 @@ type coordinate struct {
 	y int
 }
 
-func getFreePlaces(board [][]int)[]coordinate{
+func getFreePlaces(board [][]int) []coordinate {
 	freePlaces := make([]coordinate, 0)
-	for y := 3 ; y >= 0 ; y-- {
-		for x := 0 ; x < 4 ; x++ {
+	for y := 3; y >= 0; y-- {
+		for x := 0; x < 4; x++ {
 			if board[x][y] == 0 {
 				freePlaces = append(freePlaces, coordinate{
 					x: x,
@@ -295,7 +283,7 @@ func getFreePlaces(board [][]int)[]coordinate{
 	return freePlaces
 }
 
-func addNumberOnBoard(board [][]int){
+func addNumberOnBoard(board [][]int) {
 	freePlaces := getFreePlaces(board)
 	if len(freePlaces) == 0 {
 		return
@@ -310,7 +298,7 @@ func addNumberOnBoard(board [][]int){
 	board[freePlace.x][freePlace.y] = val
 }
 
-func addNumberOnBoardCord(cord coordinate, board [][]int){
+func addNumberOnBoardCord(cord coordinate, board [][]int) {
 	fRand := rand.Float64()
 	val := 2
 	if fRand >= 0.9 {
@@ -319,47 +307,47 @@ func addNumberOnBoardCord(cord coordinate, board [][]int){
 	board[cord.x][cord.y] = val
 }
 
-func computeDown(board [][]int)int{
+func computeDown(board [][]int) int {
 	score := 0
-	for y := 3 ; y >= 0 ; y-- {
-		for x := 0 ; x < 4 ; x++ {
+	for y := 3; y >= 0; y-- {
+		for x := 0; x < 4; x++ {
 			score += executeCompute("D", x, y, board)
 		}
 	}
 	return score
 }
 
-func computeUp(board [][]int)int{
+func computeUp(board [][]int) int {
 	score := 0
-	for y := 0 ; y < 4 ; y++ {
-		for x := 0 ; x < 4 ; x++ {
+	for y := 0; y < 4; y++ {
+		for x := 0; x < 4; x++ {
 			score += executeCompute("U", x, y, board)
 		}
 	}
 	return score
 }
 
-func computeRight(board [][]int)int{
+func computeRight(board [][]int) int {
 	score := 0
-	for y := 0 ; y < 4 ; y++ {
-		for x := 3 ; x >= 0 ; x-- {
+	for y := 0; y < 4; y++ {
+		for x := 3; x >= 0; x-- {
 			score += executeCompute("R", x, y, board)
 		}
 	}
 	return score
 }
 
-func computeLeft(board [][]int)int{
+func computeLeft(board [][]int) int {
 	score := 0
-	for y := 0 ; y < 4 ; y++ {
-		for x := 0 ; x < 4 ; x++ {
+	for y := 0; y < 4; y++ {
+		for x := 0; x < 4; x++ {
 			score += executeCompute("L", x, y, board)
 		}
 	}
 	return score
 }
 
-func executeCompute(kind string, x,y int, board [][]int)int {
+func executeCompute(kind string, x, y int, board [][]int) int {
 	posVal := board[x][y]
 	if posVal == 0 {
 		return 0
@@ -381,14 +369,14 @@ func executeCompute(kind string, x,y int, board [][]int)int {
 	newPosVal := board[newPos.x][newPos.y]
 	if newPosVal == 0 {
 		board[newPos.x][newPos.y] = posVal
-	}else {
+	} else {
 		board[newPos.x][newPos.y] += posVal
 	}
 	board[x][y] = 0
 	return 2 * newPosVal
 }
 
-func copy2DArr(src [][]int)[][]int{
+func copy2DArr(src [][]int) [][]int {
 	duplicate := make([][]int, len(src))
 	for i := range src {
 		duplicate[i] = make([]int, len(src[i]))
@@ -397,7 +385,7 @@ func copy2DArr(src [][]int)[][]int{
 	return duplicate
 }
 
-func startNewGame()g2048 {
+func startNewGame() g2048 {
 	return g2048{
 		board: newArr(),
 		stats: g2048stats{
@@ -407,7 +395,7 @@ func startNewGame()g2048 {
 	}
 }
 
-func newArr()[][]int {
+func newArr() [][]int {
 	board := make([][]int, 4)
 	board[0] = make([]int, 4)
 	board[1] = make([]int, 4)

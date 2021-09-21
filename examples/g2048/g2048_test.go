@@ -8,7 +8,6 @@ import (
 	"time"
 )
 
-
 // 4 0 0 0
 // 4 2 0 0
 // 4 0 0 0
@@ -35,7 +34,10 @@ func TestG2048(t *testing.T) {
 	for {
 		print2048(game2048.board, game2048.score)
 
-		tree := mcts.NewMonteCarloTree(mcts.MonteCarloTreeConfig{MaxIterations: 64})
+		tree := mcts.NewMonteCarloTree(mcts.MonteCarloTreeConfig{MaxIterations: 64, SimulationConfig: mcts.SimulationConfig{
+			Ratio:    10,
+			Strategy: mcts.Max,
+		}})
 		nodes, err := tree.Start(game2048)
 		assert.NoError(t, err)
 
@@ -55,6 +57,5 @@ func TestG2048(t *testing.T) {
 	}
 	print2048(game2048.board, game2048.score)
 	game2048.stats.print()
-
 
 }
