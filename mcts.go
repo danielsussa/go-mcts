@@ -127,15 +127,6 @@ func (n *Node) selection(policy PolicyFunc) *Node {
 		return n
 	}
 	selectedNodes := getNodeScore(n.child, policy)
-	sort.SliceStable(selectedNodes, func(i, j int) bool {
-		if selectedNodes[i].score > selectedNodes[j].score {
-			return true
-		} else if selectedNodes[i].score < selectedNodes[j].score {
-			return false
-		} else {
-			return selectedNodes[i].node.nVisited < selectedNodes[j].node.nVisited
-		}
-	})
 	for _, selectedNode := range selectedNodes {
 		node := selectedNode.node.selection(policy)
 		if node == nil {
@@ -151,6 +142,10 @@ type nodeScore struct {
 	score float64
 }
 
+func normalize(val, max, min float64) float64 {
+	return (val - min) / (max - min)
+}
+
 func getNodeScore(childNodes []*Node, policy PolicyFunc) []nodeScore {
 	nodesScore := make([]nodeScore, 0)
 
@@ -160,6 +155,15 @@ func getNodeScore(childNodes []*Node, policy PolicyFunc) []nodeScore {
 			score: policy(child.score, child.nVisited, child.parent.nVisited),
 		})
 	}
+	sort.SliceStable(nodesScore, func(i, j int) bool {
+		if nodesScore[i].score > nodesScore[j].score {
+			return true
+		} else if nodesScore[i].score < nodesScore[j].score {
+			return false
+		} else {
+			return nodesScore[i].node.nVisited < nodesScore[j].node.nVisited
+		}
+	})
 	return nodesScore
 }
 

@@ -65,32 +65,65 @@ func TestNodeSelection(t *testing.T) {
 }
 
 func TestNodeSelection2(t *testing.T) {
-	parent := &Node{
-		nVisited:         8,
-		state:            nil,
-		child:            []*Node{},
-		parent:           nil,
-		iterations:       []interface{}{1, 2, 3, 4, 5, 6},
-		currIterationIdx: 6,
+	{
+		parent := &Node{nVisited: 8, child: []*Node{}}
+
+		l1N1 := &Node{score: -1, nVisited: 1, parent: parent}
+		l1N2 := &Node{score: 0, nVisited: 3, parent: parent}
+		l1N3 := &Node{score: -2, nVisited: 2, parent: parent}
+		l1N4 := &Node{score: -2, nVisited: 2, parent: parent}
+
+		parent.child = append(parent.child, l1N1, l1N2, l1N3, l1N4)
+
+		nodeScore := getNodeScore(parent.child, defaultPolicyFunc())
+
+		assert.Equal(t, nodeScore[0].score, 1.18)
+	}
+	{
+		parent := &Node{nVisited: 9, child: []*Node{}}
+
+		l1N1 := &Node{score: -1, nVisited: 1, parent: parent}
+		l1N2 := &Node{score: 0, nVisited: 4, parent: parent}
+		l1N3 := &Node{score: -2, nVisited: 2, parent: parent}
+		l1N4 := &Node{score: -2, nVisited: 2, parent: parent}
+
+		parent.child = append(parent.child, l1N1, l1N2, l1N3, l1N4)
+
+		nodeScore := getNodeScore(parent.child, defaultPolicyFunc())
+
+		assert.Equal(t, nodeScore[0].score, 1.10)
+	}
+	{
+		parent := &Node{nVisited: 10, child: []*Node{}}
+
+		l1N1 := &Node{score: -2, nVisited: 2, parent: parent}
+		l1N2 := &Node{score: 0, nVisited: 4, parent: parent}
+		l1N3 := &Node{score: -2, nVisited: 2, parent: parent}
+		l1N4 := &Node{score: -2, nVisited: 2, parent: parent}
+
+		parent.child = append(parent.child, l1N1, l1N2, l1N3, l1N4)
+
+		nodeScore := getNodeScore(parent.child, defaultPolicyFunc())
+
+		assert.Equal(t, nodeScore[0].score, 1.07)
+	}
+	{
+		parent := &Node{nVisited: 11, child: []*Node{}}
+
+		l1N1 := &Node{score: -2, nVisited: 2, parent: parent}
+		l1N2 := &Node{score: 1, nVisited: 5, parent: parent}
+		l1N3 := &Node{score: -2, nVisited: 2, parent: parent}
+		l1N4 := &Node{score: -2, nVisited: 2, parent: parent}
+
+		parent.child = append(parent.child, l1N1, l1N2, l1N3, l1N4)
+
+		nodeScore := getNodeScore(parent.child, defaultPolicyFunc())
+
+		assert.Equal(t, nodeScore[0].score, 1.18)
 	}
 
-	l1N1 := &Node{score: -1, nVisited: 1, parent: parent}
-	l1N2 := &Node{score: 1, nVisited: 1, parent: parent}
-	l1N3 := &Node{score: 0, nVisited: 2, parent: parent}
-	l1N4 := &Node{score: 2, nVisited: 2, parent: parent}
-	l1N5 := &Node{score: -1, nVisited: 1, parent: parent}
-	l1N6 := &Node{score: 0, nVisited: 1, parent: parent}
+}
 
-	l2N1 := &Node{score: 1, nVisited: 1, parent: parent}
-	l1N3.child = append(l1N3.child, l2N1)
-
-	l2N2 := &Node{score: -1, nVisited: 1, parent: parent}
-	l1N4.child = append(l1N4.child, l2N2)
-
-	parent.child = append(parent.child, l1N1, l1N2, l1N3, l1N4, l1N5, l1N6)
-
-	nodeScore := getNodeScore(parent.child, defaultPolicyFunc())
-
-	assert.Equal(t, nodeScore[0].score, 1.44)
-
+func TestNormalize(t *testing.T) {
+	assert.Equal(t, 0.5, normalize(6, 3, 9))
 }
