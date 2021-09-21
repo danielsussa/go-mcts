@@ -1,7 +1,6 @@
 package mcts
 
 import (
-	"fmt"
 	"math"
 	"sort"
 	"time"
@@ -86,39 +85,31 @@ func (n *Node) backPropagate(score float64) {
 	n.parent.backPropagate(score)
 }
 
-func (n *Node) expand() (*Node, bool) {
+func (n *Node) expand() *Node {
 	if n.iterations == nil {
 		iteration := n.state.Copy().Iterations()
 		if iteration == nil {
-			return &Node{}, true
+			return &Node{}
 		}
 		n.iterations = n.state.Copy().Iterations()
 	}
 	if len(n.iterations) == n.currIterationIdx {
-		return n, false
+		return n
 	}
 	state := n.state.Copy().Expand(n.iterations[n.currIterationIdx])
 	n.currIterationIdx++
 	if state == nil {
-		return nil, false
-	}
-
-	// is duplicated
-	for _, child := range n.child {
-		if child.state.ID() == state.ID() {
-			return &Node{}, true
-		}
+		return nil
 	}
 
 	child := &Node{
 		state:      state,
 		parent:     n,
 		iterations: nil,
-		id:         state.ID(),
 		levelY:     n.levelY + 1,
 	}
 	n.child = append(n.child, child)
-	return child, false
+	return child
 }
 
 func (n *Node) getParentNVisited() uint {
@@ -128,52 +119,31 @@ func (n *Node) getParentNVisited() uint {
 	return n.parent.getParentNVisited()
 }
 
-func (n *Node) selectByState(state State) *Node {
-	if n.state.ID() == state.ID() {
+func (n *Node) selection(policy PolicyFunc) *Node {
+	if n.child == nil {
 		return n
 	}
-	for _, child := range n.child {
-		if child.state.ID() == state.ID() {
-			return child
+	if n.iterations == nil || n.currIterationIdx < len(n.iterations) {
+		return n
+	}
+	selectedNodes := getNodeScore(n.child, policy)
+	sort.SliceStable(selectedNodes, func(i, j int) bool {
+		if selectedNodes[i].score > selectedNodes[j].score {
+			return true
+		} else if selectedNodes[i].score < selectedNodes[j].score {
+			return false
+		} else {
+			return selectedNodes[i].node.nVisited < selectedNodes[j].node.nVisited
 		}
-		childNode := child.selectByState(state)
-		if childNode == nil {
+	})
+	for _, selectedNode := range selectedNodes {
+		node := selectedNode.node.selection(policy)
+		if node == nil {
 			continue
 		}
-		if childNode.state.ID() == state.ID() {
-			return childNode
-		}
+		return node
 	}
-	return nil
-}
-
-func (n *Node) selection(policy PolicyFunc) *Node {
-	for {
-		if n.child == nil {
-			return n
-		}
-		if n.iterations == nil || n.currIterationIdx < len(n.iterations) {
-			return n
-		}
-		selectedNodes := getNodeScore(n.child, policy)
-		sort.SliceStable(selectedNodes, func(i, j int) bool {
-			if selectedNodes[i].score > selectedNodes[j].score {
-				return true
-			} else if selectedNodes[i].score < selectedNodes[j].score {
-				return false
-			} else {
-				return selectedNodes[i].node.nVisited < selectedNodes[j].node.nVisited
-			}
-		})
-		for _, selectedNode := range selectedNodes {
-			node := selectedNode.node.selection(policy)
-			if node == nil {
-				continue
-			}
-			return node
-		}
-		return n
-	}
+	return n
 }
 
 type nodeScore struct {
@@ -204,13 +174,11 @@ func defaultPolicyFunc() PolicyFunc {
 	}
 }
 
-// think about ID
 type State interface {
 	Simulate() float64
 	Expand(iter interface{}) State
 	Iterations() []interface{}
 	Copy() State
-	ID() string
 }
 
 type MonteCarloTree struct {
@@ -234,11 +202,9 @@ type nodeFinalScore struct {
 }
 
 func (mct *MonteCarloTree) Start(initialState State) (FinalScore, error) {
-	mct.firstStateID = initialState.ID()
 	mct.node = &Node{
 		state:      initialState.Copy(),
 		iterations: nil,
-		id:         initialState.ID(),
 	}
 	return mct.start()
 }
@@ -249,15 +215,7 @@ func (mct *MonteCarloTree) start() (FinalScore, error) {
 	for {
 		node := mct.node.selection(mct.policy)
 
-		childNode, duplicatedNode := node.expand()
-		if duplicatedNode {
-			return FinalScore{}, fmt.Errorf("duplication node")
-		}
-
-		// check for mutable objects
-		if mct.firstStateID != mct.node.state.ID() {
-			return FinalScore{}, fmt.Errorf("mutable node")
-		}
+		childNode := node.expand()
 
 		if childNode == nil {
 			node.rollOut(mct.simulationsConfig)

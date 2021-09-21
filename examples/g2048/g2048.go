@@ -72,10 +72,6 @@ func (g g2048) Simulate() float64 {
 	return float64(score)
 }
 
-func (g g2048) ID() string {
-	return fmt.Sprintf("%v", g.board)
-}
-
 func getAllIterations(board [][]int) []interface{} {
 	down := 0
 	up := 0
