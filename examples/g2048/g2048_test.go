@@ -36,7 +36,7 @@ func TestG2048(t *testing.T) {
 
 		tree := mcts.NewMonteCarloTree(mcts.MonteCarloTreeConfig{MaxIterations: 64, SimulationConfig: mcts.SimulationConfig{
 			Ratio:    10,
-			Strategy: mcts.Max,
+			Strategy: mcts.Avg,
 		}})
 		nodes, err := tree.Start(game2048)
 		assert.NoError(t, err)
