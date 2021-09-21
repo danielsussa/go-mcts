@@ -18,7 +18,6 @@ type Node struct {
 
 	iterations       []interface{}
 	currIterationIdx int
-	id               string
 }
 
 func (n *Node) rollOut(simConfig SimulationConfig) {

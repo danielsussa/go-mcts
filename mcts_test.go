@@ -16,9 +16,7 @@ func TestPolicyFunc(t *testing.T) {
 	assert.Equal(t, 2.52, f(2, 2, 10))
 }
 
-// precisa criar um otimo teste de selecao!!
 func TestNodeSelection(t *testing.T) {
-	maxPlays := uint(6)
 	parent := &Node{
 		score:            6,
 		nVisited:         14,
@@ -26,7 +24,7 @@ func TestNodeSelection(t *testing.T) {
 		state:            nil,
 		child:            []*Node{},
 		parent:           nil,
-		iterations:       &maxPlays,
+		iterations:       []interface{}{1, 2, 3, 4, 5, 6},
 		currIterationIdx: 6,
 	}
 
@@ -67,13 +65,12 @@ func TestNodeSelection(t *testing.T) {
 }
 
 func TestNodeSelection2(t *testing.T) {
-	maxPlays := uint(6)
 	parent := &Node{
 		nVisited:         8,
 		state:            nil,
 		child:            []*Node{},
 		parent:           nil,
-		iterations:       &maxPlays,
+		iterations:       []interface{}{1, 2, 3, 4, 5, 6},
 		currIterationIdx: 6,
 	}
 
@@ -92,7 +89,7 @@ func TestNodeSelection2(t *testing.T) {
 
 	parent.child = append(parent.child, l1N1, l1N2, l1N3, l1N4, l1N5, l1N6)
 
-	nodeScore := getNodeScore(parent.child,defaultPolicyFunc())
+	nodeScore := getNodeScore(parent.child, defaultPolicyFunc())
 
 	assert.Equal(t, nodeScore[0].score, 1.44)
 
