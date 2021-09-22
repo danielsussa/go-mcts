@@ -18,6 +18,7 @@ type Node struct {
 
 	iterations       []interface{}
 	currIterationIdx int
+	id               string
 }
 
 func (n *Node) rollOut(simConfig SimulationConfig) {
@@ -103,6 +104,7 @@ func (n *Node) expand() (*Node, error) {
 	}
 
 	child := &Node{
+		id:         state.ID(),
 		state:      state,
 		parent:     n,
 		iterations: nil,
@@ -126,7 +128,7 @@ func (n *Node) selection(policy PolicyFunc) *Node {
 	if n.iterations == nil || n.currIterationIdx < len(n.iterations) {
 		return n
 	}
-	selectedNodes := getNodeScore(n.child, policy)
+	selectedNodes := getNodeScore(n, policy)
 	for _, selectedNode := range selectedNodes {
 		node := selectedNode.node.selection(policy)
 		if node == nil {
@@ -146,10 +148,10 @@ func normalize(val, max, min float64) float64 {
 	return (val - min) / (max - min)
 }
 
-func getNodeScore(childNodes []*Node, policy PolicyFunc) []nodeScore {
+func getNodeScore(parent *Node, policy PolicyFunc) []nodeScore {
 	nodesScore := make([]nodeScore, 0)
 
-	for _, child := range childNodes {
+	for _, child := range parent.child {
 		nodesScore = append(nodesScore, nodeScore{
 			node:  child,
 			score: policy(child.score, child.nVisited, child.parent.nVisited),
@@ -183,6 +185,7 @@ type State interface {
 	Expand(iter interface{}) State
 	Iterations() []interface{}
 	Copy() State
+	ID() string
 }
 
 type MonteCarloTree struct {

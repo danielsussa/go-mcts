@@ -75,7 +75,7 @@ func TestNodeSelection2(t *testing.T) {
 
 		parent.child = append(parent.child, l1N1, l1N2, l1N3, l1N4)
 
-		nodeScore := getNodeScore(parent.child, defaultPolicyFunc())
+		nodeScore := getNodeScore(parent, defaultPolicyFunc())
 
 		assert.Equal(t, nodeScore[0].score, 1.18)
 	}
@@ -89,7 +89,7 @@ func TestNodeSelection2(t *testing.T) {
 
 		parent.child = append(parent.child, l1N1, l1N2, l1N3, l1N4)
 
-		nodeScore := getNodeScore(parent.child, defaultPolicyFunc())
+		nodeScore := getNodeScore(parent, defaultPolicyFunc())
 
 		assert.Equal(t, nodeScore[0].score, 1.10)
 	}
@@ -103,7 +103,7 @@ func TestNodeSelection2(t *testing.T) {
 
 		parent.child = append(parent.child, l1N1, l1N2, l1N3, l1N4)
 
-		nodeScore := getNodeScore(parent.child, defaultPolicyFunc())
+		nodeScore := getNodeScore(parent, defaultPolicyFunc())
 
 		assert.Equal(t, nodeScore[0].score, 1.07)
 	}
@@ -117,7 +117,7 @@ func TestNodeSelection2(t *testing.T) {
 
 		parent.child = append(parent.child, l1N1, l1N2, l1N3, l1N4)
 
-		nodeScore := getNodeScore(parent.child, defaultPolicyFunc())
+		nodeScore := getNodeScore(parent, defaultPolicyFunc())
 
 		assert.Equal(t, nodeScore[0].score, 1.18)
 	}
