@@ -222,6 +222,10 @@ func print2048(board [][]int, score int) {
 	fmt.Println()
 }
 
+func (g g2048) ID() string {
+	return ""
+}
+
 func (g g2048) Expand(i interface{}) mcts.State {
 	score := 0
 	if i.(string) == "D" {

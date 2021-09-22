@@ -5,7 +5,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"math/rand"
 	"testing"
-	"time"
 )
 
 // 4 0 0 0
@@ -29,7 +28,7 @@ func TestG2048(t *testing.T) {
 
 	totalIterations := 0
 
-	rand.Seed(time.Now().Unix())
+	rand.Seed(1)
 
 	for {
 		print2048(game2048.board, game2048.score)
