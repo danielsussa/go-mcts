@@ -19,10 +19,10 @@ func TestExample1(t *testing.T) {
 	tree := mcts.NewMonteCarloTree(mcts.MonteCarloTreeConfig{MaxIterations: 1000})
 	nodes, err := tree.Start(game)
 	assert.NoError(t, err)
-	assert.Equal(t, nodes.NodeScore[0].State.ID(), fmt.Sprintf("%s",[]player{
-			O, X, E,
-			E, E, E,
-			E, E, E,
+	assert.Equal(t, nodes.NodeScore[0].State.ID(), fmt.Sprintf("%s", []player{
+		O, X, E,
+		E, E, E,
+		E, E, E,
 	}))
 }
 
@@ -38,10 +38,10 @@ func TestExample2(t *testing.T) {
 	tree := mcts.NewMonteCarloTree(mcts.MonteCarloTreeConfig{MaxIterations: 1000})
 	nodes, err := tree.Start(game)
 	assert.NoError(t, err)
-	assert.Equal(t, nodes.NodeScore[0].State.ID(), fmt.Sprintf("%s",[]player{
-			O, X, O,
-			E, X, E,
-			E, E, E,
+	assert.Equal(t, nodes.NodeScore[0].State.ID(), fmt.Sprintf("%s", []player{
+		O, X, O,
+		E, X, E,
+		E, E, E,
 	}))
 }
 
@@ -57,10 +57,10 @@ func TestExample4(t *testing.T) {
 	tree := mcts.NewMonteCarloTree(mcts.MonteCarloTreeConfig{MaxIterations: 1000})
 	nodes, err := tree.Start(game)
 	assert.NoError(t, err)
-	assert.Equal(t, nodes.NodeScore[0].State.ID(), fmt.Sprintf("%s",[]player{
-			O, X, O,
-			X, X, O,
-			E, O, X,
+	assert.Equal(t, nodes.NodeScore[0].State.ID(), fmt.Sprintf("%s", []player{
+		O, X, O,
+		X, X, O,
+		E, O, X,
 	}))
 }
 
@@ -76,10 +76,9 @@ func TestExample5(t *testing.T) {
 	tree := mcts.NewMonteCarloTree(mcts.MonteCarloTreeConfig{MaxIterations: 1000})
 	nodes, err := tree.Start(game)
 	assert.NoError(t, err)
-	assert.Equal(t, nodes.NodeScore[0].State.ID(), fmt.Sprintf("%s",[]player{
-			X, E, X,
-			E, O, E,
-			O, E, X,
+	assert.Equal(t, nodes.NodeScore[0].State.ID(), fmt.Sprintf("%s", []player{
+		X, E, X,
+		E, O, E,
+		O, E, X,
 	}))
 }
-

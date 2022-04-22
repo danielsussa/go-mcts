@@ -21,7 +21,7 @@ type ticTacGame struct {
 }
 
 // until final game & result
-func (t ticTacGame) Simulate() mcts.SimulationResult {
+func (t ticTacGame) Simulate() float64 {
 	return t.simulate(t.getPlayerTurn())
 }
 
@@ -35,18 +35,14 @@ func (t ticTacGame) Copy() mcts.State {
 	}
 }
 
-func (t ticTacGame) simulate(startPlayer player) mcts.SimulationResult {
+func (t ticTacGame) simulate(startPlayer player) float64 {
 	p := startPlayer
 	if t.winner() != E {
-		return mcts.SimulationResult{
-			Score: t.winner().toScore(),
-		}
+		return t.winner().toScore()
 	}
 	moved := t.randomMove(p)
 	if !moved {
-		return mcts.SimulationResult{
-			Score: t.winner().toScore(),
-		}
+		return t.winner().toScore()
 	}
 
 	playerWinner := E
@@ -58,14 +54,10 @@ func (t ticTacGame) simulate(startPlayer player) mcts.SimulationResult {
 		p = nextPlayer(t)
 		moved = t.randomMove(p)
 		if !moved {
-			return mcts.SimulationResult{
-				Score: 0,
-			}
+			return 0
 		}
 	}
-	return mcts.SimulationResult{
-		Score: playerWinner.toScore(),
-	}
+	return playerWinner.toScore()
 }
 
 func nextPlayer(game ticTacGame) player {
@@ -120,8 +112,8 @@ func (t ticTacGame) winner() player {
 	return E
 }
 
-func (t ticTacGame) Iterations() []interface{} {
-	iters := make([]interface{}, 0)
+func (t ticTacGame) Iterations() []any {
+	iters := make([]any, 0)
 	for idx, place := range t.board {
 		if place == E {
 			iters = append(iters, idx)
@@ -130,7 +122,7 @@ func (t ticTacGame) Iterations() []interface{} {
 	return iters
 }
 
-func (t ticTacGame) Expand(id interface{}) mcts.State {
+func (t ticTacGame) Expand(id any) mcts.State {
 	t.move(id.(int), nextPlayer(t))
 	return t
 }
